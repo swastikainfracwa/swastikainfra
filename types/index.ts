@@ -115,6 +115,7 @@ export interface Property {
   documentUploadCompleted?: boolean;
   assignedAgentId?: string;
   assignedAgentName?: string;
+  assignedAgentPhone?: string;
   assignedAt?: Date;
   submittedAt?: Date;
   verifiedAt?: Date;

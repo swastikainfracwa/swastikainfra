@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Send, Eye, AlertCircle, CheckCircle2, Clock, FileText } from 'lucide-react';
+import { Upload, Send, Eye, AlertCircle, CheckCircle2, Clock, FileText, Plus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import DocumentUpload from '@/components/DocumentUpload';
 import DocumentList from '@/components/DocumentList';
+import { AddPropertyModal } from '@/components/AddPropertyModal';
 
 interface Property {
   id: string;
@@ -52,6 +53,7 @@ export default function AgentDashboard() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [documentModalOpen, setDocumentModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [addPropertyModalOpen, setAddPropertyModalOpen] = useState(false);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -223,11 +225,17 @@ export default function AgentDashboard() {
 
       {/* Properties Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Assigned Properties</CardTitle>
-          <CardDescription>
-            Upload documents and submit properties for verification
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Assigned Properties</CardTitle>
+            <CardDescription>
+              Upload documents and submit properties for verification
+            </CardDescription>
+          </div>
+          <Button onClick={() => setAddPropertyModalOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Property
+          </Button>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -355,6 +363,16 @@ export default function AgentDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add Property Modal */}
+      <AddPropertyModal
+        isOpen={addPropertyModalOpen}
+        onClose={() => setAddPropertyModalOpen(false)}
+        onSuccess={() => {
+          setAddPropertyModalOpen(false);
+          fetchProperties();
+        }}
+      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   Eye,
   UserPlus,
   AlertCircle,
+  Plus,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import DocumentList from '@/components/DocumentList';
+import { AddPropertyModal } from '@/components/AddPropertyModal';
 
 interface Property {
   id: string;
@@ -97,6 +99,7 @@ export default function ManagerDashboardPage() {
   const [reviewAction, setReviewAction] = useState<'verify' | 'reject'>('verify');
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [addPropertyModalOpen, setAddPropertyModalOpen] = useState(false);
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -332,11 +335,17 @@ export default function ManagerDashboardPage() {
 
         <TabsContent value="pending" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Pending Assignment</CardTitle>
-              <CardDescription>
-                Properties awaiting agent assignment
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Pending Assignment</CardTitle>
+                <CardDescription>
+                  Properties awaiting agent assignment
+                </CardDescription>
+              </div>
+              <Button onClick={() => setAddPropertyModalOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Property
+              </Button>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -576,6 +585,16 @@ export default function ManagerDashboardPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add Property Modal */}
+      <AddPropertyModal
+        isOpen={addPropertyModalOpen}
+        onClose={() => setAddPropertyModalOpen(false)}
+        onSuccess={() => {
+          setAddPropertyModalOpen(false);
+          fetchDashboardData();
+        }}
+      />
     </div>
   );
 }

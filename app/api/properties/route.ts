@@ -123,6 +123,7 @@ export async function GET(request: NextRequest) {
         documentUploadCompleted: prop.document_upload_completed,
         assignedAgentId: prop.assigned_agent_id,
         assignedAgentName: prop.agent?.name,
+        assignedAgentPhone: prop.agent?.phone,
         seoSlug: prop.seo_slug,
         views: prop.views || 0,
         createdAt: new Date(prop.created_at),

@@ -14,6 +14,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Eye,
+  Plus,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +47,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { AddPropertyModal } from '@/components/AddPropertyModal';
 
 interface User {
   id: string;
@@ -62,7 +64,7 @@ interface Property {
   city: string;
   location: string;
   price: number;
-  verification_status: string;
+  verificationStatus: string;
   ownerName?: string;
   assignedAgentId?: string;
   assignedAgentName?: string;
@@ -99,6 +101,7 @@ export default function AdminDashboardPage() {
   const [propertyToAssign, setPropertyToAssign] = useState<Property | null>(null);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
   const [processing, setProcessing] = useState(false);
+  const [addPropertyModalOpen, setAddPropertyModalOpen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -145,7 +148,7 @@ export default function AdminDashboardPage() {
       
       if (propertiesRes.ok) {
         const properties = propertiesData.properties || [];
-        const verified = properties.filter((p: Property) => p.verification_status === 'verified');
+        const verified = properties.filter((p: Property) => p.verificationStatus === 'verified');
         setProperties(properties);
         
         // Fix: Use the fetched data instead of stale state
@@ -497,9 +500,15 @@ export default function AdminDashboardPage() {
 
         <TabsContent value="properties" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Property Management</CardTitle>
-              <CardDescription>Manage all properties, assign agents, and verify listings</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Property Management</CardTitle>
+                <CardDescription>Manage all properties, assign agents, and verify listings</CardDescription>
+              </div>
+              <Button onClick={() => setAddPropertyModalOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Property
+              </Button>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -543,7 +552,7 @@ export default function AdminDashboardPage() {
                               <span className="text-sm text-muted-foreground">Unassigned</span>
                             )}
                           </TableCell>
-                          <TableCell>{getStatusBadge(property.verification_status)}</TableCell>
+                          <TableCell>{getStatusBadge(property.verificationStatus)}</TableCell>
                           <TableCell className="text-right space-x-2">
                             <Button
                               variant="outline"
@@ -557,17 +566,15 @@ export default function AdminDashboardPage() {
                             >
                               <UserPlus className="h-4 w-4" />
                             </Button>
-                            {property.verification_status !== 'verified' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleVerifyProperty(property.id)}
-                                title="Verify Property"
-                                disabled={processing}
-                              >
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleVerifyProperty(property.id)}
+                              title={property.verificationStatus === 'verified' ? 'Already Verified' : 'Verify Property'}
+                              disabled={processing || property.verificationStatus === 'verified'}
+                            >
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
@@ -875,6 +882,16 @@ export default function AdminDashboardPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Property Modal */}
+      <AddPropertyModal
+        isOpen={addPropertyModalOpen}
+        onClose={() => setAddPropertyModalOpen(false)}
+        onSuccess={() => {
+          setAddPropertyModalOpen(false);
+          fetchDashboardData();
+        }}
+      />
     </div>
   );
 }

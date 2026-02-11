@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { 
-  MapPin, Maximize, Eye, Calendar, Phone, User, ChevronLeft, 
+  MapPin, Maximize, Calendar, Phone, User, ChevronLeft, 
   ChevronRight, Share2, Heart, MessageCircle
 } from 'lucide-react';
 import VerificationBadge from '@/components/VerificationBadge';
@@ -145,7 +145,7 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="flex items-center gap-2">
                       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Maximize className="h-5 w-5 text-primary" />
@@ -153,16 +153,6 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                       <div>
                         <div className="text-sm text-muted-foreground">Plot Size</div>
                         <div className="font-semibold">{formatPlotSize(property.plotSize, property.plotSizeUnit)}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Eye className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Views</div>
-                        <div className="font-semibold">{property.views}</div>
                       </div>
                     </div>
 
@@ -181,13 +171,11 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
-                        <Badge className="bg-success/10 text-success border-0 font-semibold capitalize">
-                          {property.verificationStatus}
-                        </Badge>
+                    {property.verificationBadge && (
+                      <div className="flex items-center gap-2">
+                        <VerificationBadge badge={property.verificationBadge} showLabel size="lg" />
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   <Separator />
@@ -220,10 +208,19 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                     {hasSubmittedLead ? 'Interest Submitted' : 'I\'m Interested'}
                   </Button>
                   
-                  <Button variant="outline" className="w-full gap-2" size="lg">
-                    <Phone className="h-4 w-4" />
-                    Contact Owner
-                  </Button>
+                  {property.assignedAgentPhone && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2" 
+                      size="lg"
+                      asChild
+                    >
+                      <a href={`tel:${property.assignedAgentPhone}`}>
+                        <Phone className="h-4 w-4" />
+                        Call Agent
+                      </a>
+                    </Button>
+                  )}
 
                   <div className="flex gap-2">
                     <Button variant="outline" size="icon" className="flex-1">
@@ -243,8 +240,10 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                       <User className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <div className="font-semibold">{property.ownerName}</div>
-                      <div className="text-sm text-muted-foreground">{property.ownerPhone}</div>
+                      <div className="font-semibold">{property.assignedAgentName || property.ownerName}</div>
+                      {property.assignedAgentPhone && (
+                        <div className="text-sm text-muted-foreground">{property.assignedAgentPhone}</div>
+                      )}
                     </div>
                   </div>
                 </div>

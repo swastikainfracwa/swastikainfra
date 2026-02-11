@@ -25,7 +25,10 @@ async function getPropertyBySlug(slug: string): Promise<Property | null> {
   // Try to find by seo_slug first
   let { data: property, error } = await supabase
     .from('properties')
-    .select('*')
+    .select(`
+      *,
+      agent:assigned_agent_id(name, phone)
+    `)
     .eq('seo_slug', slug)
     .maybeSingle();
 
@@ -33,7 +36,10 @@ async function getPropertyBySlug(slug: string): Promise<Property | null> {
   if (!property && !error) {
     const result = await supabase
       .from('properties')
-      .select('*')
+      .select(`
+        *,
+        agent:assigned_agent_id(name, phone)
+      `)
       .eq('id', slug)
       .maybeSingle();
     property = result.data;
@@ -66,6 +72,8 @@ async function getPropertyBySlug(slug: string): Promise<Property | null> {
     isStaffCreated: property.is_staff_created,
     documentUploadCompleted: property.document_upload_completed,
     assignedAgentId: property.assigned_agent_id,
+    assignedAgentName: property.agent?.name,
+    assignedAgentPhone: property.agent?.phone,
     seoSlug: property.seo_slug,
     views: property.views || 0,
     createdAt: new Date(property.created_at),

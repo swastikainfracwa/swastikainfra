@@ -38,8 +38,8 @@ const badgeConfig = {
   },
   'verified-admin': {
     icon: ShieldCheck,
-    label: 'Admin Verified',
-    description: 'This property has been verified by administrators for complete authenticity.',
+    label: 'Swastika Verified',
+    description: 'This property has been verified by Swastika Infrastructures for complete authenticity.',
     iconClass: 'text-primary-foreground',
     bgClass: 'bg-success',
   },
