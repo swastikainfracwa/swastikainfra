@@ -90,7 +90,7 @@ export interface Database {
 // Property types
 export type PropertyType = 'residential' | 'commercial' | 'agricultural' | 'industrial';
 export type VerificationStatus = 'pending' | 'assigned' | 'submitted' | 'verified' | 'rejected';
-export type VerificationBadgeType = 'verified-staff' | 'verified-manager' | null;
+export type VerificationBadgeType = 'verified-staff' | 'verified-manager' | 'verified-agent' | 'verified-admin' | null;
 export type DocumentType = 'owner_national_id' | 'property_registration' | 'property_photo';
 
 export interface Property {

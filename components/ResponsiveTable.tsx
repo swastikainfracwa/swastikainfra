@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
-import { formatPrice } from '@/data/mockData';
+import { formatPrice } from '@/lib/mockData';
 import { Property, Lead } from '@/types';
 
 interface PropertyCardMobileProps {

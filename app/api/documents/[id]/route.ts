@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -15,6 +15,7 @@ export async function DELETE(
     const userId = (session.user as any).id;
     const userRole = (session.user as any).role;
     const adminSupabase = createAdminClient();
+    const { id } = await params;
 
     // Get document details
     const { data: document, error: docError } = await adminSupabase
@@ -26,7 +27,7 @@ export async function DELETE(
         uploaded_by,
         properties:property_id (owner_id, assigned_agent_id)
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (docError || !document) {
@@ -68,7 +69,7 @@ export async function DELETE(
     const { error: deleteError } = await adminSupabase
       .from('property_documents')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (deleteError) {
       console.error('Database delete error:', deleteError);
@@ -88,7 +89,7 @@ export async function DELETE(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -99,6 +100,7 @@ export async function GET(
     const userId = (session.user as any).id;
     const userRole = (session.user as any).role;
     const adminSupabase = createAdminClient();
+    const { id } = await params;
 
     // Get document with property details
     const { data: document, error: docError } = await adminSupabase
@@ -114,7 +116,7 @@ export async function GET(
         created_at,
         properties:property_id (owner_id, assigned_agent_id)
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (docError || !document) {

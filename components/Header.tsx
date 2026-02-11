@@ -46,7 +46,7 @@ export default function Header() {
   const isStaff = user && ['admin', 'manager', 'agent'].includes(user.role);
 
   // Navigation links for regular users
-  const publicNavLinks = [
+  const publicNavLinks: { label: string; href: string; icon?: React.ComponentType<{ className?: string }> }[] = [
     { label: 'Home', href: '/' },
     { label: 'Browse Plots', href: '/plots' },
     { label: 'About', href: '/about' },
@@ -54,7 +54,7 @@ export default function Header() {
   ];
 
   // Navigation links for staff (Admin/Manager/Agent)
-  const staffNavLinks = [
+  const staffNavLinks: { label: string; href: string; icon?: React.ComponentType<{ className?: string }> }[] = [
     { label: 'Dashboard', href: getDashboardRoute(), icon: LayoutDashboard },
     { label: 'Properties', href: '/plots' },
   ];
@@ -78,16 +78,19 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
-            >
-              {'icon' in link && link.icon && <link.icon className="h-4 w-4" />}
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+              >
+                {Icon && <Icon className="h-4 w-4" />}
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Desktop Auth */}
