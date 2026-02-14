@@ -23,23 +23,23 @@ export async function middleware(request: NextRequest) {
   // Get NextAuth session token
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
-  // Handle root path ('/') - redirect authenticated users to their dashboard
+  // Handle root path ('/') - redirect staff users to their dashboard
+  // Owners and regular users can access the home page
   if (pathname === '/' && token) {
     const userRole = token.role as string;
     const url = request.nextUrl.clone();
     
-    // Redirect to role-specific dashboard
+    // Only redirect staff to their dashboards
     if (userRole === 'admin') {
       url.pathname = '/admin';
     } else if (userRole === 'manager') {
       url.pathname = '/manager';
     } else if (userRole === 'agent') {
       url.pathname = '/agent';
-    } else if (userRole === 'owner') {
-      url.pathname = '/dashboard';
     }
+    // Owners stay on home page and can access their dashboard via navigation
     
-    // Only redirect if we have a valid role
+    // Only redirect if we have a valid role and pathname changed
     if (url.pathname !== '/') {
       return NextResponse.redirect(url);
     }

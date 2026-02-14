@@ -62,24 +62,23 @@ export default function LoginPage() {
           description: 'You have successfully logged in.',
         });
         
-        // Redirect based on user role to their respective dashboard
+        // Redirect based on user role
         setTimeout(() => {
           fetch('/api/auth/session')
             .then(res => res.json())
             .then(session => {
               const role = session?.user?.role;
-              let redirectUrl = '/'; // Default for visitors or unknown roles
+              let redirectUrl = '/'; // Default for owners and visitors
               
-              // Role-based dashboard redirects
+              // Staff redirects to their respective dashboards
               if (role === 'admin') {
                 redirectUrl = '/admin';
               } else if (role === 'manager') {
                 redirectUrl = '/manager';
               } else if (role === 'agent') {
                 redirectUrl = '/agent';
-              } else if (role === 'owner') {
-                redirectUrl = '/dashboard';
               }
+              // Owners go to home page, can access dashboard via navigation
               
               window.location.href = redirectUrl;
             })

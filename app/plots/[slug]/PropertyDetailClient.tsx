@@ -15,6 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { formatPrice, formatPlotSize } from '@/lib/mockData';
 import type { Property } from '@/types';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 type PropertyDetailClientProps = {
   property: Property;
@@ -26,6 +28,9 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [hasSubmittedLead, setHasSubmittedLead] = useState(false);
   const [isContentUnlocked, setIsContentUnlocked] = useState(false);
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   // Check localStorage for global unlock status on mount
   useEffect(() => {
@@ -41,6 +46,51 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
     setHasSubmittedLead(true);
     setIsContentUnlocked(true);
     localStorage.setItem('swastika-properties-unlocked', 'true');
+  };
+
+  // Auto-submit lead for authenticated users
+  const handleUnlockClick = async () => {
+    if (isAuthenticated && user && user.phone) {
+      // User is logged in with phone number, auto-submit lead with their info
+      setIsUnlocking(true);
+      try {
+        const response = await fetch('/api/leads', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            propertyId: property.id,
+            propertyTitle: property.title,
+            name: user.name,
+            phone: user.phone,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit lead');
+        }
+
+        toast({
+          title: 'Details Unlocked!',
+          description: 'You can now view full details of all properties.',
+        });
+
+        handleLeadSuccess();
+      } catch (error) {
+        console.error('Lead submission error:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to unlock details. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsUnlocking(false);
+      }
+    } else {
+      // User is not logged in or doesn't have phone number, show modal
+      setIsLeadModalOpen(true);
+    }
   };
 
   // Extract YouTube video ID from various URL formats
@@ -168,10 +218,11 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                       <Button 
                         size="lg" 
                         className="gap-2"
-                        onClick={() => setIsLeadModalOpen(true)}
+                        onClick={handleUnlockClick}
+                        disabled={isUnlocking}
                       >
                         <Lock className="h-4 w-4" />
-                        Unlock Full Details
+                        {isUnlocking ? 'Unlocking...' : 'Unlock Full Details'}
                       </Button>
                     </div>
                   )}
@@ -264,11 +315,11 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                   <Button 
                     className="w-full gap-2" 
                     size="lg"
-                    onClick={() => setIsLeadModalOpen(true)}
-                    disabled={hasSubmittedLead}
+                    onClick={handleUnlockClick}
+                    disabled={hasSubmittedLead || isUnlocking}
                   >
                     <MessageCircle className="h-4 w-4" />
-                    {hasSubmittedLead ? 'Interest Submitted' : 'I\'m Interested'}
+                    {isUnlocking ? 'Submitting...' : hasSubmittedLead ? 'Interest Submitted' : 'I\'m Interested'}
                   </Button>
                   
                   <Button 
