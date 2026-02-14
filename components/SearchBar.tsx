@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, MapPin, IndianRupee, Maximize, SlidersHorizontal } from 'lucide-react';
+import { useDebounce } from 'use-debounce';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +34,7 @@ interface SearchBarProps {
 export default function SearchBar({ variant = 'compact', className }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [propertyType, setPropertyType] = useState<PropertyType | ''>(
@@ -44,10 +46,36 @@ export default function SearchBar({ variant = 'compact', className }: SearchBarP
   const [maxSize, setMaxSize] = useState(searchParams.get('maxSize') || '');
   const [verifiedOnly, setVerifiedOnly] = useState(searchParams.get('verified') === 'true');
 
+  // Debounce text inputs (location, prices, sizes) by 500ms
+  const [debouncedLocation] = useDebounce(location, 500);
+  const [debouncedMinPrice] = useDebounce(minPrice, 500);
+  const [debouncedMaxPrice] = useDebounce(maxPrice, 500);
+  const [debouncedMinSize] = useDebounce(minSize, 500);
+  const [debouncedMaxSize] = useDebounce(maxSize, 500);
+
+  // Auto-apply filters when debounced values or instant values change
+  useEffect(() => {
+    // Only auto-apply filters if we're already on the plots page
+    if (!pathname.startsWith('/plots')) {
+      return;
+    }
+
+    const params = new URLSearchParams();
+    if (debouncedLocation) params.set('location', debouncedLocation);
+    if (propertyType && propertyType !== 'all') params.set('type', propertyType);
+    if (debouncedMinPrice) params.set('minPrice', debouncedMinPrice);
+    if (debouncedMaxPrice) params.set('maxPrice', debouncedMaxPrice);
+    if (debouncedMinSize) params.set('minSize', debouncedMinSize);
+    if (debouncedMaxSize) params.set('maxSize', debouncedMaxSize);
+    if (verifiedOnly) params.set('verified', 'true');
+    
+    router.push(`/plots?${params.toString()}`, { scroll: false });
+  }, [debouncedLocation, propertyType, debouncedMinPrice, debouncedMaxPrice, debouncedMinSize, debouncedMaxSize, verifiedOnly, router, pathname]);
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (location) params.set('location', location);
-    if (propertyType) params.set('type', propertyType);
+    if (propertyType && propertyType !== 'all') params.set('type', propertyType);
     if (minPrice) params.set('minPrice', minPrice);
     if (maxPrice) params.set('maxPrice', maxPrice);
     if (minSize) params.set('minSize', minSize);
@@ -198,15 +226,15 @@ export default function SearchBar({ variant = 'compact', className }: SearchBarP
                 <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} />
               </div>
 
-              <Button onClick={handleSearch} className="w-full">
-                Apply Filters
-              </Button>
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                Filters apply automatically as you change them
+              </p>
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* Search Button */}
-        <Button onClick={handleSearch} size={isHero ? 'lg' : 'default'} className="gap-2">
+        {/* Search Button - Now optional for immediate search */}
+        <Button onClick={handleSearch} size={isHero ? 'lg' : 'default'} variant="default" className="gap-2">
           <Search className="h-4 w-4" />
           Search
         </Button>

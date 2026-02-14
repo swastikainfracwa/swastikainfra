@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, UserCog } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,15 +23,23 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-const agentSchema = z.object({
+const staffSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
+  role: z.enum(['agent', 'manager']),
 });
 
-type AgentFormData = z.infer<typeof agentSchema>;
+type StaffFormData = z.infer<typeof staffSchema>;
 
 interface AddAgentModalProps {
   isOpen: boolean;
@@ -47,17 +55,18 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<AgentFormData>({
-    resolver: zodResolver(agentSchema),
+  const form = useForm<StaffFormData>({
+    resolver: zodResolver(staffSchema),
     defaultValues: {
       name: '',
       email: '',
       phone: '',
       password: '',
+      role: 'agent',
     },
   });
 
-  const onSubmit = async (data: AgentFormData) => {
+  const onSubmit = async (data: StaffFormData) => {
     try {
       setIsSubmitting(true);
 
@@ -72,22 +81,25 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to create agent');
+        throw new Error(result.error || `Failed to create ${data.role}`);
       }
 
+      const roleLabel = data.role === 'agent' ? 'Agent' : 'Manager';
+      const employeeId = result.staff?.employee_id || result.agent?.employee_id;
+
       toast({
-        title: 'Agent Created!',
-        description: `${data.name} has been added as a real estate agent.`,
+        title: `${roleLabel} Created!`,
+        description: `${data.name} has been added as a ${data.role}${employeeId ? ` with employee ID: ${employeeId}` : ''}.`,
       });
 
       form.reset();
       onSuccess?.();
       onClose();
     } catch (error: any) {
-      console.error('Agent creation error:', error);
+      console.error('Staff creation error:', error);
       toast({
         title: 'Creation Failed',
-        description: error.message || 'Failed to create agent. Please try again.',
+        description: error.message || 'Failed to create staff member. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -100,16 +112,42 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Add Real Estate Agent
+            {form.watch('role') === 'manager' ? (
+              <UserCog className="h-5 w-5" />
+            ) : (
+              <User className="h-5 w-5" />
+            )}
+            Add Staff Member
           </DialogTitle>
           <DialogDescription>
-            Create a new agent account. They will be able to verify properties assigned to them.
+            Create a new agent or manager account. Employee ID will be automatically assigned.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="agent">Agent</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="name"
@@ -187,7 +225,7 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
                     Creating...
                   </>
                 ) : (
-                  'Create Agent'
+                  `Create ${form.watch('role') === 'manager' ? 'Manager' : 'Agent'}`
                 )}
               </Button>
             </div>

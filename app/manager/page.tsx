@@ -13,6 +13,8 @@ import {
   UserPlus,
   AlertCircle,
   Plus,
+  MessageCircle,
+  Phone,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -72,11 +74,21 @@ interface Agent {
   phone: string;
 }
 
+interface Lead {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  name: string;
+  phone: string;
+  createdAt: Date;
+}
+
 interface Stats {
   totalProperties: number;
   activeAgents: number;
   pendingAssignment: number;
   underReview: number;
+  totalLeads: number;
 }
 
 export default function ManagerDashboardPage() {
@@ -85,10 +97,12 @@ export default function ManagerDashboardPage() {
     activeAgents: 0,
     pendingAssignment: 0,
     underReview: 0,
+    totalLeads: 0,
   });
   const [pendingProperties, setPendingProperties] = useState<Property[]>([]);
   const [submittedProperties, setSubmittedProperties] = useState<Property[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -141,11 +155,21 @@ export default function ManagerDashboardPage() {
         setAgents(agentsData.users || []);
       }
 
+      // Fetch all leads
+      const leadsRes = await fetch('/api/leads');
+      let leadsData: Lead[] = [];
+      if (leadsRes.ok) {
+        const leadsJson = await leadsRes.json();
+        leadsData = leadsJson.leads || [];
+        setLeads(leadsData);
+      }
+
       setStats({
         totalProperties: allProperties.length,
         activeAgents: agents.length,
         pendingAssignment: pending.length,
         underReview: submitted.length,
+        totalLeads: leadsData.length,
       });
     } catch (error: any) {
       console.error('Dashboard fetch error:', error);
@@ -298,6 +322,7 @@ export default function ManagerDashboardPage() {
     { title: 'Active Agents', value: stats.activeAgents, icon: Users, color: 'text-blue-500' },
     { title: 'Pending Assignment', value: stats.pendingAssignment, icon: Clock, color: 'text-yellow-500' },
     { title: 'Under Review', value: stats.underReview, icon: Shield, color: 'text-purple-500' },
+    { title: 'Total Leads', value: stats.totalLeads, icon: MessageCircle, color: 'text-cyan-500' },
   ];
 
   return (
@@ -308,7 +333,7 @@ export default function ManagerDashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         {statsConfig.map((stat, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -330,6 +355,9 @@ export default function ManagerDashboardPage() {
           </TabsTrigger>
           <TabsTrigger value="submitted">
             Under Review ({stats.underReview})
+          </TabsTrigger>
+          <TabsTrigger value="leads">
+            Leads ({stats.totalLeads})
           </TabsTrigger>
         </TabsList>
 
@@ -468,6 +496,66 @@ export default function ManagerDashboardPage() {
                             <XCircle className="h-4 w-4 mr-1 text-red-600" />
                             Reject
                           </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="leads" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Leads Management</CardTitle>
+              <CardDescription>All property inquiry leads from interested customers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                </div>
+              ) : leads.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No leads found</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer Name</TableHead>
+                      <TableHead>Phone Number</TableHead>
+                      <TableHead>Property</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {leads.map((lead) => (
+                      <TableRow key={lead.id}>
+                        <TableCell className="font-medium">{lead.name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <a href={`tel:${lead.phone}`} className="hover:text-primary">
+                              {lead.phone}
+                            </a>
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-[300px] truncate">
+                          {lead.propertyTitle}
+                        </TableCell>
+                        <TableCell>
+                          {typeof lead.createdAt === 'string' 
+                            ? formatDate(lead.createdAt)
+                            : new Date(lead.createdAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })
+                          }
                         </TableCell>
                       </TableRow>
                     ))}

@@ -62,14 +62,15 @@ export default function LoginPage() {
           description: 'You have successfully logged in.',
         });
         
-        // Redirect based on user role
+        // Redirect based on user role to their respective dashboard
         setTimeout(() => {
           fetch('/api/auth/session')
             .then(res => res.json())
             .then(session => {
               const role = session?.user?.role;
-              let redirectUrl = '/';
+              let redirectUrl = '/'; // Default for visitors or unknown roles
               
+              // Role-based dashboard redirects
               if (role === 'admin') {
                 redirectUrl = '/admin';
               } else if (role === 'manager') {

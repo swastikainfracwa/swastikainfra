@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Eye,
   Plus,
+  MessageCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -55,15 +56,26 @@ interface User {
   email: string;
   phone: string;
   role: string;
+  employee_id?: string;
   created_at: string;
 }
 
 interface Property {
   id: string;
   title: string;
+  description?: string;
   city: string;
   location: string;
+  state?: string;
   price: number;
+  plotSize?: number;
+  plotSizeUnit?: 'sqft' | 'acre';
+  propertyType?: string;
+  images?: string[];
+  youtubeVideoUrl?: string;
+  latitude?: number;
+  longitude?: number;
+  ownerPhone?: string;
   verificationStatus: string;
   ownerName?: string;
   assignedAgentId?: string;
@@ -72,23 +84,38 @@ interface Property {
   createdAt: Date;
 }
 
+interface Lead {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  name: string;
+  phone: string;
+  createdAt: Date;
+}
+
 interface Stats {
   totalUsers: number;
   totalAgents: number;
+  totalManagers: number;
   totalProperties: number;
   verifiedProperties: number;
+  totalLeads: number;
 }
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     totalAgents: 0,
+    totalManagers: 0,
     totalProperties: 0,
     verifiedProperties: 0,
+    totalLeads: 0,
   });
   const [agents, setAgents] = useState<User[]>([]);
+  const [managers, setManagers] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [userModalOpen, setUserModalOpen] = useState(false);
@@ -102,6 +129,7 @@ export default function AdminDashboardPage() {
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
   const [processing, setProcessing] = useState(false);
   const [addPropertyModalOpen, setAddPropertyModalOpen] = useState(false);
+  const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -134,29 +162,45 @@ export default function AdminDashboardPage() {
       
       let users: User[] = [];
       let agentsList: User[] = [];
+      let managersList: User[] = [];
       
       if (usersRes.ok) {
         users = usersData.users || [];
         agentsList = users.filter((u: User) => u.role === 'agent');
+        managersList = users.filter((u: User) => u.role === 'manager');
         setAllUsers(users);
         setAgents(agentsList);
+        setManagers(managersList);
       }
 
       // Fetch all properties
       const propertiesRes = await fetch('/api/properties');
       const propertiesData = await propertiesRes.json();
       
+      let leadsData: Lead[] = [];
+      
       if (propertiesRes.ok) {
         const properties = propertiesData.properties || [];
         const verified = properties.filter((p: Property) => p.verificationStatus === 'verified');
         setProperties(properties);
         
+        // Fetch all leads
+        const leadsRes = await fetch('/api/leads');
+        const leadsJson = await leadsRes.json();
+        
+        if (leadsRes.ok) {
+          leadsData = leadsJson.leads || [];
+          setLeads(leadsData);
+        }
+        
         // Fix: Use the fetched data instead of stale state
         setStats({
           totalUsers: users.length,
           totalAgents: agentsList.length,
+          totalManagers: managersList.length,
           totalProperties: properties.length,
           verifiedProperties: verified.length,
+          totalLeads: leadsData.length,
         });
       }
     } catch (error: any) {
@@ -464,8 +508,10 @@ export default function AdminDashboardPage() {
   const statsConfig = [
     { title: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-primary' },
     { title: 'Active Agents', value: stats.totalAgents, icon: Shield, color: 'text-blue-500' },
+    { title: 'Active Managers', value: stats.totalManagers, icon: Shield, color: 'text-orange-500' },
     { title: 'Total Properties', value: stats.totalProperties, icon: Building2, color: 'text-purple-500' },
     { title: 'Verified Properties', value: stats.verifiedProperties, icon: CheckCircle2, color: 'text-green-500' },
+    { title: 'Total Leads', value: stats.totalLeads, icon: MessageCircle, color: 'text-cyan-500' },
   ];
 
   return (
@@ -476,7 +522,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-6">
         {statsConfig.map((stat, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -495,6 +541,8 @@ export default function AdminDashboardPage() {
         <TabsList>
           <TabsTrigger value="properties">Properties ({stats.totalProperties})</TabsTrigger>
           <TabsTrigger value="agents">Agents ({stats.totalAgents})</TabsTrigger>
+          <TabsTrigger value="managers">Managers ({stats.totalManagers})</TabsTrigger>
+          <TabsTrigger value="leads">Leads ({stats.totalLeads})</TabsTrigger>
           <TabsTrigger value="all">All Users ({stats.totalUsers})</TabsTrigger>
         </TabsList>
 
@@ -578,6 +626,17 @@ export default function AdminDashboardPage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() => {
+                                setPropertyToEdit(property);
+                                setAddPropertyModalOpen(true);
+                              }}
+                              title="Edit Property"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => router.push(`/plots/${property.seoSlug}`)}
                               title="View Property"
                             >
@@ -631,6 +690,7 @@ export default function AdminDashboardPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Employee ID</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
@@ -641,6 +701,11 @@ export default function AdminDashboardPage() {
                   <TableBody>
                     {agents.map((agent) => (
                       <TableRow key={agent.id}>
+                        <TableCell>
+                          <Badge variant="secondary" className="font-mono">
+                            {agent.employee_id || 'N/A'}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="font-medium">{agent.name}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -683,6 +748,90 @@ export default function AdminDashboardPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="managers" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Manager Management</CardTitle>
+                <CardDescription>Manage managers and their access</CardDescription>
+              </div>
+              <Button onClick={openCreateUserModal}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Manager
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                </div>
+              ) : managers.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No managers found</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Employee ID</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {managers.map((manager) => (
+                      <TableRow key={manager.id}>
+                        <TableCell>
+                          <Badge variant="secondary" className="font-mono">
+                            {manager.employee_id || 'N/A'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">{manager.name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            {manager.email}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            {manager.phone}
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatDate(manager.created_at)}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditUserModal(manager)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setUserToDelete(manager);
+                              setDeleteConfirmOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="all" className="space-y-4">
           <Card>
             <CardHeader>
@@ -707,6 +856,7 @@ export default function AdminDashboardPage() {
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Role</TableHead>
+                      <TableHead>Employee ID</TableHead>
                       <TableHead>Joined</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -717,7 +867,67 @@ export default function AdminDashboardPage() {
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.phone}</TableCell>
                         <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell>
+                          {user.employee_id ? (
+                            <Badge variant="secondary" className="font-mono">
+                              {user.employee_id}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell>{formatDate(user.created_at)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="leads" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Leads Management</CardTitle>
+              <CardDescription>All property inquiry leads from interested customers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                </div>
+              ) : leads.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No leads found</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer Name</TableHead>
+                      <TableHead>Phone Number</TableHead>
+                      <TableHead>Property</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {leads.map((lead) => (
+                      <TableRow key={lead.id}>
+                        <TableCell className="font-medium">{lead.name}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <a href={`tel:${lead.phone}`} className="hover:text-primary">
+                              {lead.phone}
+                            </a>
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-[300px] truncate">
+                          {lead.propertyTitle}
+                        </TableCell>
+                        <TableCell>{formatDate(lead.createdAt)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -883,14 +1093,19 @@ export default function AdminDashboardPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Property Modal */}
+      {/* Add/Edit Property Modal */}
       <AddPropertyModal
         isOpen={addPropertyModalOpen}
-        onClose={() => setAddPropertyModalOpen(false)}
+        onClose={() => {
+          setAddPropertyModalOpen(false);
+          setPropertyToEdit(null);
+        }}
         onSuccess={() => {
           setAddPropertyModalOpen(false);
+          setPropertyToEdit(null);
           fetchDashboardData();
         }}
+        propertyToEdit={propertyToEdit}
       />
     </div>
   );

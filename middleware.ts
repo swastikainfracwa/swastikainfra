@@ -13,18 +13,42 @@ export async function middleware(request: NextRequest) {
     '/contact',
     '/login',
     '/signup',
+    '/privacy',
+    '/terms',
   ];
 
   // Check if it's a plot detail page (dynamic route)
   const isPlotDetailPage = pathname.startsWith('/plots/') && pathname !== '/plots';
 
+  // Get NextAuth session token
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+
+  // Handle root path ('/') - redirect authenticated users to their dashboard
+  if (pathname === '/' && token) {
+    const userRole = token.role as string;
+    const url = request.nextUrl.clone();
+    
+    // Redirect to role-specific dashboard
+    if (userRole === 'admin') {
+      url.pathname = '/admin';
+    } else if (userRole === 'manager') {
+      url.pathname = '/manager';
+    } else if (userRole === 'agent') {
+      url.pathname = '/agent';
+    } else if (userRole === 'owner') {
+      url.pathname = '/dashboard';
+    }
+    
+    // Only redirect if we have a valid role
+    if (url.pathname !== '/') {
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Allow access to public routes, plot detail pages, and API routes
   if (publicRoutes.includes(pathname) || isPlotDetailPage || pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
-
-  // Get NextAuth session token
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
   // Protected routes - require authentication
   if (!token) {
@@ -82,3 +106,4 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|public).*)',
   ],
 };
+

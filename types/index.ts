@@ -7,6 +7,7 @@ export interface User {
   phone: string;
   email: string;
   role: UserRole;
+  employeeId?: string; // Auto-generated for agents and managers (format: SWI001, SWI002, etc.)
   enable_2fa?: boolean;
   createdAt: Date;
   updatedAt?: Date;
@@ -52,7 +53,7 @@ export interface Database {
           city: string;
           state: string;
           plot_size: number;
-          plot_size_unit: 'sqyd' | 'sqft' | 'acre';
+          plot_size_unit: 'sqft' | 'acre';
           property_type: PropertyType;
           images: string[];
           owner_id: string;
@@ -102,7 +103,7 @@ export interface Property {
   city: string;
   state: string;
   plotSize: number; // in sq yards
-  plotSizeUnit: 'sqyd' | 'sqft' | 'acre';
+  plotSizeUnit: 'sqft' | 'acre';
   propertyType: PropertyType;
   images: string[];
   ownerId: string;
@@ -120,6 +121,9 @@ export interface Property {
   submittedAt?: Date;
   verifiedAt?: Date;
   rejectionReason?: string;
+  latitude?: number;
+  longitude?: number;
+  youtubeVideoUrl?: string;
   seoSlug: string;
   views: number;
   createdAt: Date;
@@ -195,7 +199,7 @@ export interface OwnerPropertyFormData {
   city: string;
   state: string;
   plotSize: number;
-  plotSizeUnit: 'sqyd' | 'sqft' | 'acre';
+  plotSizeUnit: 'sqft' | 'acre';
   propertyType: PropertyType;
   ownerContactNumber: string;
   images?: string[];

@@ -63,6 +63,7 @@ async function getPropertyBySlug(slug: string): Promise<Property | null> {
     plotSizeUnit: property.plot_size_unit,
     propertyType: property.property_type,
     images: property.images || [],
+    youtubeVideoUrl: property.youtube_video_url,
     ownerId: property.owner_id,
     ownerName: property.owner_name,
     ownerPhone: property.owner_phone,

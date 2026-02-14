@@ -124,6 +124,13 @@ export async function GET(request: NextRequest) {
         assignedAgentId: prop.assigned_agent_id,
         assignedAgentName: prop.agent?.name,
         assignedAgentPhone: prop.agent?.phone,
+        assignedAt: prop.assigned_at ? new Date(prop.assigned_at) : undefined,
+        submittedAt: prop.submitted_at ? new Date(prop.submitted_at) : undefined,
+        verifiedAt: prop.verified_at ? new Date(prop.verified_at) : undefined,
+        rejectionReason: prop.rejection_reason,
+        latitude: prop.latitude,
+        longitude: prop.longitude,
+        youtubeVideoUrl: prop.youtube_video_url,
         seoSlug: prop.seo_slug,
         views: prop.views || 0,
         createdAt: new Date(prop.created_at),
@@ -163,7 +170,10 @@ export async function POST(request: NextRequest) {
       plotSize,
       plotSizeUnit,
       propertyType,
-      images = []
+      images = [],
+      youtubeVideoUrl,
+      latitude,
+      longitude
     } = body;
 
     const { isStaffCreated = false, ownerContactNumber } = body;
@@ -220,6 +230,9 @@ export async function POST(request: NextRequest) {
         plot_size_unit: plotSizeUnit,
         property_type: propertyType,
         images,
+        youtube_video_url: youtubeVideoUrl || null,
+        latitude: latitude || null,
+        longitude: longitude || null,
         owner_id: session.user.id,
         owner_name: session.user.name || '',
         owner_phone: isStaffCreated ? (session.user as any).phone : ownerContactNumber,

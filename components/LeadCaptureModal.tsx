@@ -60,20 +60,46 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
   const onSubmit = async (data: LeadFormData) => {
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // In production, this would save to database
-    console.log('Lead captured:', { ...data, propertyId, propertyTitle });
-    
-    toast({
-      title: 'Details Unlocked!',
-      description: 'You can now view the full property details.',
-    });
-    
-    setIsSubmitting(false);
-    form.reset();
-    onSuccess();
+    try {
+      // Save lead to database
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          propertyId,
+          propertyTitle,
+          name: data.name,
+          phone: data.phone,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit lead');
+      }
+
+      const result = await response.json();
+      console.log('Lead saved:', result);
+
+      toast({
+        title: 'Details Unlocked!',
+        description: 'You can now view full details of all properties.',
+      });
+
+      form.reset();
+      onSuccess();
+      onClose(); // Auto-close modal after successful submission
+    } catch (error) {
+      console.error('Lead submission error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to submit. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

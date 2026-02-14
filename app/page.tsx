@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Shield, BadgeCheck, TrendingUp, MapPin } from 'lucide-react';
+import { ArrowRight, Shield, BadgeCheck, TrendingUp, MapPin, Navigation, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import SearchBar from '@/components/SearchBar';
 import PropertyCard from '@/components/PropertyCard';
 import type { Property } from '@/types';
@@ -12,7 +14,11 @@ import type { Property } from '@/types';
 export default function HomePage() {
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
   const [verifiedProperties, setVerifiedProperties] = useState<Property[]>([]);
+  const [nearbyProperties, setNearbyProperties] = useState<(Property & { distance?: number })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [locationPermission, setLocationPermission] = useState<'prompt' | 'granted' | 'denied' | 'dismissed'>('prompt');
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -35,7 +41,65 @@ export default function HomePage() {
     };
 
     fetchProperties();
+
+    // Check if user has previously granted/denied location permission
+    const savedPermission = localStorage.getItem('locationPermission');
+    if (savedPermission === 'dismissed') {
+      setLocationPermission('dismissed');
+    } else if (savedPermission === 'denied') {
+      setLocationPermission('denied');
+    }
   }, []);
+
+  // Request location and fetch nearby properties
+  const requestLocationAndFetchNearby = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setNearbyLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ latitude, longitude });
+        setLocationPermission('granted');
+        localStorage.setItem('locationPermission', 'granted');
+
+        try {
+          const response = await fetch(
+            `/api/properties/nearby?latitude=${latitude}&longitude=${longitude}&radius=50`
+          );
+          const data = await response.json();
+
+          if (data.properties) {
+            setNearbyProperties(data.properties.slice(0, 6)); // Show top 6 nearest
+          }
+        } catch (error) {
+          console.error('Error fetching nearby properties:', error);
+        } finally {
+          setNearbyLoading(false);
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        setLocationPermission('denied');
+        localStorage.setItem('locationPermission', 'denied');
+        setNearbyLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000, // Cache for 5 minutes
+      }
+    );
+  };
+
+  const dismissLocationPrompt = () => {
+    setLocationPermission('dismissed');
+    localStorage.setItem('locationPermission', 'dismissed');
+  };
 
   const stats = [
     { value: '500+', label: 'Properties Listed' },
@@ -111,6 +175,83 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Location Permission Prompt */}
+      {locationPermission === 'prompt' && (
+        <section className="py-6 bg-muted/50 border-b">
+          <div className="container">
+            <Alert className="relative">
+              <Navigation className="h-5 w-5" />
+              <AlertTitle className="mb-2">Discover Properties Near You</AlertTitle>
+              <AlertDescription className="mb-4">
+                Share your location to see properties available in your area. We'll show you the closest verified plots within 50km.
+              </AlertDescription>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={requestLocationAndFetchNearby} disabled={nearbyLoading}>
+                  {nearbyLoading ? 'Getting Location...' : 'Share My Location'}
+                </Button>
+                <Button variant="outline" onClick={dismissLocationPrompt}>
+                  Maybe Later
+                </Button>
+              </div>
+              <button
+                onClick={dismissLocationPrompt}
+                className="absolute top-3 right-3 p-1 rounded-sm opacity-70 hover:opacity-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </Alert>
+          </div>
+        </section>
+      )}
+
+      {/* Properties Near You */}
+      {locationPermission === 'granted' && nearbyProperties.length > 0 && (
+        <section className="py-12 md:py-16 bg-success/5">
+          <div className="container">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2">
+                  <Navigation className="h-6 w-6 text-success" />
+                  Properties Near You
+                </h2>
+                <p className="text-muted-foreground mt-1">
+                  Verified plots within 50km of your location
+                </p>
+              </div>
+              <Link href={`/plots?nearMe=true&lat=${userLocation?.latitude}&lng=${userLocation?.longitude}`}>
+                <Button variant="outline" className="gap-2">
+                  View All <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {nearbyLoading ? (
+                <>
+                  <PropertySkeleton />
+                  <PropertySkeleton />
+                  <PropertySkeleton />
+                </>
+              ) : (
+                nearbyProperties.map((property) => (
+                  <div key={property.id} className="relative">
+                    <PropertyCard property={property} />
+                    {property.distance !== undefined && (
+                      <Badge 
+                        variant="secondary" 
+                        className="absolute top-3 right-3 bg-success/90 text-white"
+                      >
+                        {property.distance.toFixed(1)} km away
+                      </Badge>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Featured Properties */}
       <section className="py-12 md:py-16 bg-background">

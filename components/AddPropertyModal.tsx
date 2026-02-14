@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,6 +44,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import DocumentUpload from '@/components/DocumentUpload';
+import { LocationPicker } from '@/components/LocationPicker';
 
 // Base schema for all users
 const basePropertySchema = z.object({
@@ -54,8 +55,17 @@ const basePropertySchema = z.object({
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'State is required'),
   plotSize: z.string().min(1, 'Plot size is required'),
-  plotSizeUnit: z.enum(['sqyd', 'sqft', 'acre']),
+  plotSizeUnit: z.enum(['sqft', 'acre']),
   propertyType: z.enum(['residential', 'commercial', 'agricultural', 'industrial']),
+  youtubeVideoUrl: z.string().optional().refine(
+    (val) => {
+      if (!val || val.trim() === '') return true;
+      // Accept various YouTube URL formats
+      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})(&.*)?$/;
+      return youtubeRegex.test(val);
+    },
+    { message: 'Please enter a valid YouTube URL' }
+  ),
 });
 
 // Owner schema adds contact number
@@ -73,12 +83,14 @@ interface AddPropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  propertyToEdit?: any | null;
 }
 
 export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  propertyToEdit,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState<'details' | 'documents'>('details');
@@ -91,6 +103,13 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [locationData, setLocationData] = useState<{
+    address: string;
+    latitude: number;
+    longitude: number;
+    city?: string;
+    state?: string;
+  } | null>(null);
   
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -105,7 +124,19 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
 
   const form = useForm<OwnerPropertyFormData | StaffPropertyFormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
+    defaultValues: propertyToEdit ? {
+      title: propertyToEdit.title || '',
+      description: propertyToEdit.description || '',
+      price: propertyToEdit.price?.toString() || '',
+      location: propertyToEdit.location || '',
+      city: propertyToEdit.city || '',
+      state: propertyToEdit.state || '',
+      plotSize: propertyToEdit.plotSize?.toString() || '',
+      plotSizeUnit: propertyToEdit.plotSizeUnit || 'sqft',
+      propertyType: propertyToEdit.propertyType || 'residential',
+      youtubeVideoUrl: propertyToEdit.youtubeVideoUrl || '',
+      ...(isStaff ? {} : { ownerContactNumber: propertyToEdit.ownerPhone || '' }),
+    } : {
       title: '',
       description: '',
       price: '',
@@ -113,11 +144,69 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
       city: '',
       state: '',
       plotSize: '',
-      plotSizeUnit: 'sqyd',
+      plotSizeUnit: 'sqft',
       propertyType: 'residential',
+      youtubeVideoUrl: '',
       ...(isStaff ? {} : { ownerContactNumber: '' }),
     },
   });
+
+  // Watch plotSizeUnit to dynamically update price label
+  const plotSizeUnit = form.watch('plotSizeUnit');
+
+  // Reset form when propertyToEdit changes or modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      if (propertyToEdit) {
+        // Pre-populate form with property data
+        form.reset({
+          title: propertyToEdit.title || '',
+          description: propertyToEdit.description || '',
+          price: propertyToEdit.price?.toString() || '',
+          location: propertyToEdit.location || '',
+          city: propertyToEdit.city || '',
+          state: propertyToEdit.state || '',
+          plotSize: propertyToEdit.plotSize?.toString() || '',
+          plotSizeUnit: propertyToEdit.plotSizeUnit || 'sqft',
+          propertyType: propertyToEdit.propertyType || 'residential',
+          youtubeVideoUrl: propertyToEdit.youtubeVideoUrl || '',
+          ...(isStaff ? {} : { ownerContactNumber: propertyToEdit.ownerPhone || '' }),
+        });
+        // Set location data if available
+        if (propertyToEdit.latitude && propertyToEdit.longitude) {
+          setLocationData({
+            address: propertyToEdit.location,
+            latitude: propertyToEdit.latitude,
+            longitude: propertyToEdit.longitude,
+            city: propertyToEdit.city,
+            state: propertyToEdit.state,
+          });
+        }
+        // Clear new image selections but keep existing images
+        setSelectedImages([]);
+        setImagePreviews([]);
+      } else {
+        // Reset to default values for new property
+        form.reset({
+          title: '',
+          description: '',
+          price: '',
+          location: '',
+          city: '',
+          state: '',
+          plotSize: '',
+          plotSizeUnit: 'sqft',
+          propertyType: 'residential',
+          youtubeVideoUrl: '',
+          ...(isStaff ? {} : { ownerContactNumber: '' }),
+        });
+        setLocationData(null);
+        setSelectedImages([]);
+        setImagePreviews([]);
+        setCurrentStep('details');
+      }
+    }
+  }, [isOpen, propertyToEdit, form, isStaff]);
 
   // Handle image selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,8 +289,10 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
     try {
       setIsSubmitting(true);
 
-      // For owners, validate that at least one image is selected
-      if (isOwner && selectedImages.length === 0) {
+      const isEditMode = !!propertyToEdit;
+
+      // For owners creating new properties, validate that at least one image is selected
+      if (isOwner && !isEditMode && selectedImages.length === 0 && (!propertyToEdit?.images || propertyToEdit.images.length === 0)) {
         toast({
           title: 'Images Required',
           description: 'Please upload at least one property image',
@@ -214,37 +305,65 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
         title: data.title,
         description: data.description,
         price: parseFloat(data.price),
-        location: data.location,
-        city: data.city,
-        state: data.state,
+        location: locationData?.address || data.location,
+        city: locationData?.city || data.city,
+        state: locationData?.state || data.state,
         plotSize: parseFloat(data.plotSize),
         plotSizeUnit: data.plotSizeUnit,
         propertyType: data.propertyType,
-        isStaffCreated: isStaff,
-        images: [], // Will be updated after upload
+        youtubeVideoUrl: data.youtubeVideoUrl || null,
+        latitude: locationData?.latitude || null,
+        longitude: locationData?.longitude || null,
       };
+
+      // Only add these fields when creating new property
+      if (!isEditMode) {
+        requestBody.isStaffCreated = isStaff;
+        requestBody.images = [];
+      }
 
       // Add owner contact number for non-staff users
       if (!isStaff && 'ownerContactNumber' in data) {
         requestBody.ownerContactNumber = data.ownerContactNumber;
       }
 
-      // Call API to create property
-      const response = await fetch('/api/properties', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+      let propertyId: string;
 
-      const result = await response.json();
+      if (isEditMode) {
+        // Update existing property
+        const response = await fetch(`/api/properties/${propertyToEdit.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create property');
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to update property');
+        }
+
+        propertyId = propertyToEdit.id;
+      } else {
+        // Create new property
+        const response = await fetch('/api/properties', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to create property');
+        }
+
+        propertyId = result.property.id;
       }
-
-      const propertyId = result.property.id;
 
       // Upload images if any selected
       if (selectedImages.length > 0) {
@@ -252,13 +371,18 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
         try {
           const imageUrls = await uploadImages(propertyId);
           
+          // Merge with existing images in edit mode
+          const finalImages = isEditMode 
+            ? [...(propertyToEdit.images || []), ...imageUrls]
+            : imageUrls;
+          
           // Update property with image URLs
           const updateResponse = await fetch(`/api/properties/${propertyId}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ images: imageUrls }),
+            body: JSON.stringify({ images: finalImages }),
           });
 
           if (!updateResponse.ok) {
@@ -273,7 +397,9 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
           console.error('Image upload error:', uploadError);
           toast({
             title: 'Image Upload Warning',
-            description: 'Property created but some images failed to upload',
+            description: isEditMode 
+              ? 'Property updated but some images failed to upload' 
+              : 'Property created but some images failed to upload',
             variant: 'destructive',
           });
         } finally {
@@ -281,8 +407,19 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
         }
       }
 
-      // For staff, move to document upload step
-      if (isStaff) {
+      // Success handling
+      if (isEditMode) {
+        toast({
+          title: 'Property Updated!',
+          description: 'Property details have been updated successfully.',
+        });
+        form.reset();
+        setSelectedImages([]);
+        setImagePreviews([]);
+        onSuccess?.();
+        onClose();
+      } else if (isStaff) {
+        // For staff creating new property, move to document upload step
         setCreatedPropertyId(propertyId);
         setCurrentStep('documents');
         toast({
@@ -290,7 +427,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
           description: 'Now upload documents to complete the listing.',
         });
       } else {
-        // For owners, close modal immediately
+        // For owners creating new property, close modal immediately
         toast({
           title: 'Property Listed!',
           description: 'Your property has been submitted for verification.',
@@ -392,9 +529,9 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price (₹)</FormLabel>
+                  <FormLabel>Price per {plotSizeUnit === 'acre' ? 'Acre' : 'Sq Ft'} (₹)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="4500000" {...field} />
+                    <Input type="number" placeholder={plotSizeUnit === 'acre' ? '500000' : '4500'} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -452,7 +589,6 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="sqyd">Sq Yards</SelectItem>
                       <SelectItem value="sqft">Sq Feet</SelectItem>
                       <SelectItem value="acre">Acres</SelectItem>
                     </SelectContent>
@@ -468,10 +604,22 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
             name="location"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Location / Area</FormLabel>
+                <FormLabel>Property Location</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Whitefield" {...field} />
+                  <LocationPicker
+                    value={locationData || undefined}
+                    onChange={(location) => {
+                      setLocationData(location);
+                      // Update form fields with location data
+                      form.setValue('location', location.address);
+                      if (location.city) form.setValue('city', location.city);
+                      if (location.state) form.setValue('state', location.state);
+                    }}
+                  />
                 </FormControl>
+                <FormDescription>
+                  Search for a location or click on the map to set the property location
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -487,6 +635,9 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                   <FormControl>
                     <Input placeholder="e.g., Bangalore" {...field} />
                   </FormControl>
+                  <FormDescription className="text-xs">
+                    Auto-filled from map or enter manually
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -500,6 +651,9 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                   <FormControl>
                     <Input placeholder="e.g., Karnataka" {...field} />
                   </FormControl>
+                  <FormDescription className="text-xs">
+                    Auto-filled from map or enter manually
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -530,35 +684,79 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
             />
           )}
 
+          {/* YouTube Video URL - Optional for all users */}
+          <FormField
+            control={form.control}
+            name="youtubeVideoUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>YouTube Video URL (Optional)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="url" 
+                    placeholder="https://www.youtube.com/watch?v=..." 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormDescription>
+                  Add a YouTube video tour or walkthrough of the property
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Image Upload Section */}
           <div className="space-y-3 pt-2 border-t">
             <FormLabel className="text-base">
-              Property Images {isOwner && <span className="text-destructive">*</span>}
+              Property Images {isOwner && !propertyToEdit && <span className="text-destructive">*</span>}
             </FormLabel>
             <FormDescription>
               Upload up to 10 images of your property. Images should be clear and show different angles of the property.
             </FormDescription>
             
-            {/* Image Preview Grid */}
+            {/* Existing Images (Edit Mode) */}
+            {propertyToEdit && propertyToEdit.images && propertyToEdit.images.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Existing Images:</p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {propertyToEdit.images.map((imageUrl: string, index: number) => (
+                    <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
+                      <Image
+                        src={imageUrl}
+                        alt={`Existing ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* New Image Preview Grid */}
             {imagePreviews.length > 0 && (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-3">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
-                    <Image
-                      src={preview}
-                      alt={`Preview ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(index)}
-                      className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                {propertyToEdit && <p className="text-sm text-muted-foreground">New Images to Add:</p>}
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
+                      <Image
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -599,8 +797,10 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
               {isSubmitting || uploadingImages ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {uploadingImages ? 'Uploading Images...' : 'Submitting...'}
+                  {uploadingImages ? 'Uploading Images...' : propertyToEdit ? 'Updating...' : 'Submitting...'}
                 </>
+              ) : propertyToEdit ? (
+                'Update Property'
               ) : isStaff ? (
                 'Create & Add Documents'
               ) : (
@@ -703,14 +903,19 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
         <DrawerContent className="px-4 pb-6 max-h-[90vh] overflow-y-auto">
           <DrawerHeader className="px-0">
             <DrawerTitle className="font-display">
-              {currentStep === 'details' ? 'Add New Property' : 'Upload Documents'}
+              {propertyToEdit 
+                ? 'Edit Property' 
+                : currentStep === 'details' ? 'Add New Property' : 'Upload Documents'
+              }
             </DrawerTitle>
             <DrawerDescription>
-              {currentStep === 'details' 
-                ? isStaff 
-                  ? 'Fill in the details to create a verified property listing'
-                  : 'Fill in the details to list your property'
-                : 'Add supporting documents for verification'
+              {propertyToEdit
+                ? 'Update the property details'
+                : currentStep === 'details' 
+                  ? isStaff 
+                    ? 'Fill in the details to create a verified property listing'
+                    : 'Fill in the details to list your property'
+                  : 'Add supporting documents for verification'
               }
             </DrawerDescription>
           </DrawerHeader>
@@ -725,14 +930,19 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">
-            {currentStep === 'details' ? 'Add New Property' : 'Upload Documents'}
+            {propertyToEdit 
+              ? 'Edit Property' 
+              : currentStep === 'details' ? 'Add New Property' : 'Upload Documents'
+            }
           </DialogTitle>
           <DialogDescription>
-            {currentStep === 'details'
-              ? isStaff
-                ? 'Fill in the details to create a verified property listing'
-                : 'Fill in the details to list your property for sale'
-              : 'Add supporting documents for verification'
+            {propertyToEdit
+              ? 'Update the property details'
+              : currentStep === 'details'
+                ? isStaff
+                  ? 'Fill in the details to create a verified property listing'
+                  : 'Fill in the details to list your property for sale'
+                : 'Add supporting documents for verification'
             }
           </DialogDescription>
         </DialogHeader>

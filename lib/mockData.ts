@@ -45,7 +45,7 @@ export const mockProperties: Property[] = [
     city: 'Bangalore',
     state: 'Karnataka',
     plotSize: 200,
-    plotSizeUnit: 'sqyd',
+    plotSizeUnit: 'sqft',
     propertyType: 'residential',
     images: [
       'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800',
@@ -58,7 +58,7 @@ export const mockProperties: Property[] = [
     verificationStatus: 'verified',
     verificationBadge: 'verified-agent',
     isFeatured: true,
-    seoSlug: '200-sqyd-residential-plot-whitefield-bangalore',
+    seoSlug: '200-sqft-residential-plot-whitefield-bangalore',
     views: 245,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-01-20'),
@@ -72,7 +72,7 @@ export const mockProperties: Property[] = [
     city: 'Gurgaon',
     state: 'Haryana',
     plotSize: 500,
-    plotSizeUnit: 'sqyd',
+    plotSizeUnit: 'sqft',
     propertyType: 'commercial',
     images: [
       'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800',
@@ -84,7 +84,7 @@ export const mockProperties: Property[] = [
     verificationStatus: 'verified',
     verificationBadge: 'verified-manager',
     isFeatured: true,
-    seoSlug: '500-sqyd-commercial-plot-sector-45-gurgaon',
+    seoSlug: '500-sqft-commercial-plot-sector-45-gurgaon',
     views: 189,
     createdAt: new Date('2024-01-18'),
     updatedAt: new Date('2024-01-22'),
@@ -124,7 +124,7 @@ export const mockProperties: Property[] = [
     city: 'Noida',
     state: 'Uttar Pradesh',
     plotSize: 150,
-    plotSizeUnit: 'sqyd',
+    plotSizeUnit: 'sqft',
     propertyType: 'residential',
     images: [
       'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800',
@@ -135,7 +135,7 @@ export const mockProperties: Property[] = [
     verificationStatus: 'verified',
     verificationBadge: 'verified-agent',
     isFeatured: false,
-    seoSlug: '150-sqyd-residential-plot-noida-extension',
+    seoSlug: '150-sqft-residential-plot-noida-extension',
     views: 134,
     createdAt: new Date('2024-01-22'),
     updatedAt: new Date('2024-01-22'),
@@ -174,7 +174,7 @@ export const mockProperties: Property[] = [
     city: 'Jaipur',
     state: 'Rajasthan',
     plotSize: 300,
-    plotSizeUnit: 'sqyd',
+    plotSizeUnit: 'sqft',
     propertyType: 'residential',
     images: [
       'https://images.unsplash.com/photo-1448630360428-65456885c650?w=800',
@@ -186,7 +186,7 @@ export const mockProperties: Property[] = [
     verificationStatus: 'verified',
     verificationBadge: 'verified-agent',
     isFeatured: false,
-    seoSlug: '300-sqyd-corner-plot-vaishali-nagar-jaipur',
+    seoSlug: '300-sqft-corner-plot-vaishali-nagar-jaipur',
     views: 156,
     createdAt: new Date('2024-01-21'),
     updatedAt: new Date('2024-01-21'),
@@ -257,5 +257,5 @@ export const formatPrice = (price: number): string => {
 };
 
 export const formatPlotSize = (size: number, unit: string): string => {
-  return `${size} ${unit === 'sqyd' ? 'Sq Yd' : unit === 'sqft' ? 'Sq Ft' : 'Acre'}`;
+  return `${size} ${unit === 'sqft' ? 'Sq Ft' : 'Acre'}`;
 };

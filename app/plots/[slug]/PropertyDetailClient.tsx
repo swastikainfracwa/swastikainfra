@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   MapPin, Maximize, Calendar, Phone, User, ChevronLeft, 
-  ChevronRight, Share2, Heart, MessageCircle
+  ChevronRight, Share2, Heart, MessageCircle, Lock
 } from 'lucide-react';
 import VerificationBadge from '@/components/VerificationBadge';
 import { LeadCaptureModal } from '@/components/LeadCaptureModal';
@@ -25,6 +25,33 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [hasSubmittedLead, setHasSubmittedLead] = useState(false);
+  const [isContentUnlocked, setIsContentUnlocked] = useState(false);
+
+  // Check localStorage for global unlock status on mount
+  useEffect(() => {
+    const unlocked = localStorage.getItem('swastika-properties-unlocked');
+    if (unlocked === 'true') {
+      setIsContentUnlocked(true);
+      setHasSubmittedLead(true);
+    }
+  }, []);
+
+  // Handle successful lead submission - unlock ALL properties globally
+  const handleLeadSuccess = () => {
+    setHasSubmittedLead(true);
+    setIsContentUnlocked(true);
+    localStorage.setItem('swastika-properties-unlocked', 'true');
+  };
+
+  // Extract YouTube video ID from various URL formats
+  const getYouTubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const youtubeVideoId = property.youtubeVideoUrl ? getYouTubeVideoId(property.youtubeVideoUrl) : null;
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % property.images.length);
@@ -134,7 +161,22 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
             {/* Property Info */}
             <Card>
               <CardContent className="pt-6">
-                <div className="space-y-6">
+                <div className="relative">
+                  {/* Blur overlay when locked */}
+                  {!isContentUnlocked && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-md bg-background/30 rounded-lg">
+                      <Button 
+                        size="lg" 
+                        className="gap-2"
+                        onClick={() => setIsLeadModalOpen(true)}
+                      >
+                        <Lock className="h-4 w-4" />
+                        Unlock Full Details
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <div className={cn("space-y-6", !isContentUnlocked && "blur-sm select-none pointer-events-none")}>
                   <div>
                     <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">
                       {property.title}
@@ -184,6 +226,27 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                     <h2 className="font-display text-xl font-semibold mb-3">Description</h2>
                     <p className="text-muted-foreground whitespace-pre-line">{property.description}</p>
                   </div>
+
+                  {/* YouTube Video Section */}
+                  {youtubeVideoId && (
+                    <>
+                      <Separator />
+                      <div>
+                        <h2 className="font-display text-xl font-semibold mb-3">Video Tour</h2>
+                        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                          <iframe
+                            className="absolute top-0 left-0 w-full h-full rounded-lg"
+                            src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+                            title="Property Video Tour"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          ></iframe>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
                 </div>
               </CardContent>
             </Card>
@@ -208,19 +271,17 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                     {hasSubmittedLead ? 'Interest Submitted' : 'I\'m Interested'}
                   </Button>
                   
-                  {property.assignedAgentPhone && (
-                    <Button 
-                      variant="outline" 
-                      className="w-full gap-2" 
-                      size="lg"
-                      asChild
-                    >
-                      <a href={`tel:${property.assignedAgentPhone}`}>
-                        <Phone className="h-4 w-4" />
-                        Call Agent
-                      </a>
-                    </Button>
-                  )}
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2" 
+                    size="lg"
+                    asChild
+                  >
+                    <a href="tel:+919827006656">
+                      <Phone className="h-4 w-4" />
+                      Call Now
+                    </a>
+                  </Button>
 
                   <div className="flex gap-2">
                     <Button variant="outline" size="icon" className="flex-1">
@@ -229,22 +290,6 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                     <Button variant="outline" size="icon" className="flex-1">
                       <Share2 className="h-4 w-4" />
                     </Button>
-                  </div>
-                </div>
-
-                <Separator className="my-6" />
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <div className="font-semibold">{property.assignedAgentName || property.ownerName}</div>
-                      {property.assignedAgentPhone && (
-                        <div className="text-sm text-muted-foreground">{property.assignedAgentPhone}</div>
-                      )}
-                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -258,7 +303,7 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
         onClose={() => setIsLeadModalOpen(false)}
         propertyId={property.id}
         propertyTitle={property.title}
-        onSuccess={() => setHasSubmittedLead(true)}
+        onSuccess={handleLeadSuccess}
       />
     </main>
   );
