@@ -15,9 +15,9 @@ export default function Footer() {
               <Image 
                 src="/Swastika%20logo.png" 
                 alt="Swastika Infrastructures" 
-                width={28} 
-                height={28} 
-                className="h-7 w-7 object-contain"
+                width={48} 
+                height={48} 
+                className="h-12 w-12 object-contain"
               />
               <span className="font-display text-lg font-bold">Swastika Infrastructures</span>
             </Link>
