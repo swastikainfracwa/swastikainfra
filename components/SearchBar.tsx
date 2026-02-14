@@ -62,7 +62,7 @@ export default function SearchBar({ variant = 'compact', className }: SearchBarP
 
     const params = new URLSearchParams();
     if (debouncedLocation) params.set('location', debouncedLocation);
-    if (propertyType && propertyType !== 'all') params.set('type', propertyType);
+    if (propertyType) params.set('type', propertyType);
     if (debouncedMinPrice) params.set('minPrice', debouncedMinPrice);
     if (debouncedMaxPrice) params.set('maxPrice', debouncedMaxPrice);
     if (debouncedMinSize) params.set('minSize', debouncedMinSize);
@@ -75,7 +75,7 @@ export default function SearchBar({ variant = 'compact', className }: SearchBarP
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (location) params.set('location', location);
-    if (propertyType && propertyType !== 'all') params.set('type', propertyType);
+    if (propertyType) params.set('type', propertyType);
     if (minPrice) params.set('minPrice', minPrice);
     if (maxPrice) params.set('maxPrice', maxPrice);
     if (minSize) params.set('minSize', minSize);

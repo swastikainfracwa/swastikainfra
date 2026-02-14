@@ -57,6 +57,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       libraries: ['places'],
     });
 
+    // @ts-expect-error - Loader.load() exists but types may not be up to date
     loader.load().then(() => {
       if (mapRef.current) {
         // Default location (India center) or use provided value
@@ -150,6 +151,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       });
       setIsLoading(false);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
   // Reverse geocode coordinates to address

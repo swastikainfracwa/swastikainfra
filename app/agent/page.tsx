@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Upload, Send, Eye, AlertCircle, CheckCircle2, Clock, FileText, Plus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,15 +59,7 @@ export default function AgentDashboard() {
   const { toast } = useToast();
   const router = useRouter();
 
-  useEffect(() => {
-    if (user?.role !== 'agent') {
-      router.push('/dashboard');
-      return;
-    }
-    fetchProperties();
-  }, [user]);
-
-  const fetchProperties = async () => {
+  const fetchProperties = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/properties?agentId=${user?.id}`);
@@ -89,7 +81,15 @@ export default function AgentDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
+
+  useEffect(() => {
+    if (user?.role !== 'agent') {
+      router.push('/dashboard');
+      return;
+    }
+    fetchProperties();
+  }, [user, router, fetchProperties]);
 
   const calculateStats = (props: Property[]) => {
     const stats = {

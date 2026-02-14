@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -45,15 +45,7 @@ export default function DashboardPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.role !== 'owner') {
-      router.push('/');
-      return;
-    }
-    fetchDashboardData();
-  }, [user]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -88,7 +80,15 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
+
+  useEffect(() => {
+    if (user?.role !== 'owner') {
+      router.push('/');
+      return;
+    }
+    fetchDashboardData();
+  }, [user, router, fetchDashboardData]);
 
   const statsConfig = [
     {

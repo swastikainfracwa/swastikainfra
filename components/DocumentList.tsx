@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FileText, Image as ImageIcon, Download, Trash2, Loader2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -41,11 +41,7 @@ export default function DocumentList({
   const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchDocuments();
-  }, [propertyId]);
-
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/properties/${propertyId}/documents`);
@@ -66,7 +62,11 @@ export default function DocumentList({
     } finally {
       setLoading(false);
     }
-  };
+  }, [propertyId, toast]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
 
   const handleDelete = async (documentId: string) => {
     try {

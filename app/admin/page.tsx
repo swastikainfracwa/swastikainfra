@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Building2,
@@ -144,15 +144,7 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  useEffect(() => {
-    if (user?.role !== 'admin') {
-      router.push('/dashboard');
-      return;
-    }
-    fetchDashboardData();
-  }, [user]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -213,7 +205,15 @@ export default function AdminDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (user?.role !== 'admin') {
+      router.push('/dashboard');
+      return;
+    }
+    fetchDashboardData();
+  }, [user, router, fetchDashboardData]);
 
   const openCreateUserModal = () => {
     setEditingUser(null);
