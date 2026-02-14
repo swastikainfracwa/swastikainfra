@@ -173,23 +173,23 @@ export default function AgentDashboard() {
   };
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container max-w-full px-4 md:px-6 lg:px-8 py-4 md:py-8 space-y-6 md:space-y-8 overflow-x-hidden">
       <div>
-        <h1 className="text-3xl font-display font-bold">Agent Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-2xl md:text-3xl font-display font-bold">Agent Dashboard</h1>
+        <p className="text-muted-foreground mt-2 text-sm md:text-base">
           Manage your assigned properties and upload verification documents
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Assigned Properties</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs md:text-sm font-medium">Assigned Properties</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.assigned}</div>
+            <div className="text-xl md:text-2xl font-bold">{stats.assigned}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Total properties assigned to you
             </p>
@@ -197,12 +197,12 @@ export default function AgentDashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Documents Pending</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs md:text-sm font-medium">Documents Pending</CardTitle>
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.documentsPending}</div>
+            <div className="text-xl md:text-2xl font-bold">{stats.documentsPending}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Properties awaiting document upload
             </p>
@@ -210,12 +210,12 @@ export default function AgentDashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Submitted for Review</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-xs md:text-sm font-medium">Submitted for Review</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.submitted}</div>
+            <div className="text-xl md:text-2xl font-bold">{stats.submitted}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Under manager review
             </p>

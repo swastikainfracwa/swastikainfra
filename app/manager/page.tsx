@@ -329,40 +329,46 @@ export default function ManagerDashboardPage() {
   ];
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container max-w-full px-4 md:px-6 lg:px-8 py-4 md:py-8 space-y-6 md:space-y-8 overflow-x-hidden">
       <div>
-        <h1 className="text-3xl font-display font-bold">Manager Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Welcome back, {user?.name}</p>
+        <h1 className="text-2xl md:text-3xl font-display font-bold">Manager Dashboard</h1>
+        <p className="text-muted-foreground mt-2 text-sm md:text-base">Welcome back, {user?.name}</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         {statsConfig.map((stat, index) => (
           <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs md:text-sm font-medium">{stat.title}</CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-xl md:text-2xl font-bold">{stat.value}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Properties Management */}
-      <Tabs defaultValue="pending" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="pending">
-            Pending Assignment ({stats.pendingAssignment})
-          </TabsTrigger>
-          <TabsTrigger value="submitted">
-            Under Review ({stats.underReview})
-          </TabsTrigger>
-          <TabsTrigger value="leads">
-            Leads ({stats.totalLeads})
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="pending" className="space-y-4 w-full">
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="w-full min-w-[300px]">
+            <TabsTrigger value="pending" className="text-xs md:text-sm px-2 md:px-4">
+              <span className="hidden sm:inline">Pending Assignment </span>
+              <span className="sm:hidden">Pending </span>
+              ({stats.pendingAssignment})
+            </TabsTrigger>
+            <TabsTrigger value="submitted" className="text-xs md:text-sm px-2 md:px-4">
+              <span className="hidden sm:inline">Under Review </span>
+              <span className="sm:hidden">Review </span>
+              ({stats.underReview})
+            </TabsTrigger>
+            <TabsTrigger value="leads" className="text-xs md:text-sm px-2 md:px-4">
+              Leads ({stats.totalLeads})
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="pending" className="space-y-4">
           <Card>

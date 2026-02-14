@@ -515,10 +515,10 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="container py-4 md:py-8 space-y-6 md:space-y-8">
+    <div className="container max-w-full px-4 md:px-6 lg:px-8 py-4 md:py-8 space-y-6 md:space-y-8 overflow-x-hidden">
       <div>
         <h1 className="text-2xl md:text-3xl font-display font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground mt-2">System overview and management</p>
+        <p className="text-muted-foreground mt-2 text-sm md:text-base">System overview and management</p>
       </div>
 
       {/* Stats Cards */}
@@ -537,29 +537,31 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* User Management */}
-      <Tabs defaultValue="properties" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 h-auto">
-          <TabsTrigger value="properties" className="text-xs md:text-sm py-2 px-2">
-            <span className="block">Properties</span>
-            <span className="text-[10px] md:text-xs">({stats.totalProperties})</span>
-          </TabsTrigger>
-          <TabsTrigger value="agents" className="text-xs md:text-sm py-2 px-2">
-            <span className="block">Agents</span>
-            <span className="text-[10px] md:text-xs">({stats.totalAgents})</span>
-          </TabsTrigger>
-          <TabsTrigger value="managers" className="text-xs md:text-sm py-2 px-2">
-            <span className="block">Managers</span>
-            <span className="text-[10px] md:text-xs">({stats.totalManagers})</span>
-          </TabsTrigger>
-          <TabsTrigger value="leads" className="text-xs md:text-sm lg:col-start-4 py-2 px-2">
-            <span className="block">Leads</span>
-            <span className="text-[10px] md:text-xs">({stats.totalLeads})</span>
-          </TabsTrigger>
-          <TabsTrigger value="all" className="text-xs md:text-sm py-2 px-2">
-            <span className="block">All Users</span>
-            <span className="text-[10px] md:text-xs">({stats.totalUsers})</span>
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="properties" className="space-y-4 w-full">
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="grid w-full min-w-[300px] grid-cols-3 lg:grid-cols-5 h-auto">
+            <TabsTrigger value="properties" className="text-xs md:text-sm py-2 px-1 md:px-2">
+              <span className="block leading-tight">Properties</span>
+              <span className="text-[10px] md:text-xs">({stats.totalProperties})</span>
+            </TabsTrigger>
+            <TabsTrigger value="agents" className="text-xs md:text-sm py-2 px-1 md:px-2">
+              <span className="block leading-tight">Agents</span>
+              <span className="text-[10px] md:text-xs">({stats.totalAgents})</span>
+            </TabsTrigger>
+            <TabsTrigger value="managers" className="text-xs md:text-sm py-2 px-1 md:px-2">
+              <span className="block leading-tight">Managers</span>
+              <span className="text-[10px] md:text-xs">({stats.totalManagers})</span>
+            </TabsTrigger>
+            <TabsTrigger value="leads" className="text-xs md:text-sm lg:col-start-4 py-2 px-1 md:px-2">
+              <span className="block leading-tight">Leads</span>
+              <span className="text-[10px] md:text-xs">({stats.totalLeads})</span>
+            </TabsTrigger>
+            <TabsTrigger value="all" className="text-xs md:text-sm py-2 px-1 md:px-2">
+              <span className="block leading-tight">All Users</span>
+              <span className="text-[10px] md:text-xs">({stats.totalUsers})</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="properties" className="space-y-4">
           <Card>
