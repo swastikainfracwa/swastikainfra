@@ -515,22 +515,22 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container py-4 md:py-8 space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-display font-bold">Admin Dashboard</h1>
+        <h1 className="text-2xl md:text-3xl font-display font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground mt-2">System overview and management</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-6">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
         {statsConfig.map((stat, index) => (
           <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs md:text-sm font-medium">{stat.title}</CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-xl md:text-2xl font-bold">{stat.value}</div>
             </CardContent>
           </Card>
         ))}
@@ -538,22 +538,37 @@ export default function AdminDashboardPage() {
 
       {/* User Management */}
       <Tabs defaultValue="properties" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="properties">Properties ({stats.totalProperties})</TabsTrigger>
-          <TabsTrigger value="agents">Agents ({stats.totalAgents})</TabsTrigger>
-          <TabsTrigger value="managers">Managers ({stats.totalManagers})</TabsTrigger>
-          <TabsTrigger value="leads">Leads ({stats.totalLeads})</TabsTrigger>
-          <TabsTrigger value="all">All Users ({stats.totalUsers})</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 h-auto">
+          <TabsTrigger value="properties" className="text-xs md:text-sm py-2 px-2">
+            <span className="block">Properties</span>
+            <span className="text-[10px] md:text-xs">({stats.totalProperties})</span>
+          </TabsTrigger>
+          <TabsTrigger value="agents" className="text-xs md:text-sm py-2 px-2">
+            <span className="block">Agents</span>
+            <span className="text-[10px] md:text-xs">({stats.totalAgents})</span>
+          </TabsTrigger>
+          <TabsTrigger value="managers" className="text-xs md:text-sm py-2 px-2">
+            <span className="block">Managers</span>
+            <span className="text-[10px] md:text-xs">({stats.totalManagers})</span>
+          </TabsTrigger>
+          <TabsTrigger value="leads" className="text-xs md:text-sm lg:col-start-4 py-2 px-2">
+            <span className="block">Leads</span>
+            <span className="text-[10px] md:text-xs">({stats.totalLeads})</span>
+          </TabsTrigger>
+          <TabsTrigger value="all" className="text-xs md:text-sm py-2 px-2">
+            <span className="block">All Users</span>
+            <span className="text-[10px] md:text-xs">({stats.totalUsers})</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="properties" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
               <div>
                 <CardTitle>Property Management</CardTitle>
-                <CardDescription>Manage all properties, assign agents, and verify listings</CardDescription>
+                <CardDescription className="text-xs md:text-sm">Manage all properties, assign agents, and verify listings</CardDescription>
               </div>
-              <Button onClick={() => setAddPropertyModalOpen(true)} className="gap-2">
+              <Button onClick={() => setAddPropertyModalOpen(true)} className="gap-2 w-full sm:w-auto" size="sm">
                 <Plus className="h-4 w-4" />
                 Add Property
               </Button>
@@ -569,95 +584,106 @@ export default function AdminDashboardPage() {
                   <p className="text-muted-foreground">No properties found</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Owner</TableHead>
-                        <TableHead>Agent</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {properties.map((property) => (
-                        <TableRow key={property.id}>
-                          <TableCell className="font-medium max-w-[200px] truncate">
-                            <a href={`/plots/${property.seoSlug}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary">
-                              {property.title}
-                            </a>
-                          </TableCell>
-                          <TableCell>{property.city}</TableCell>
-                          <TableCell>{formatPrice(property.price)}</TableCell>
-                          <TableCell>{property.ownerName || 'N/A'}</TableCell>
-                          <TableCell>
-                            {property.assignedAgentName ? (
-                              <span className="text-sm">{property.assignedAgentName}</span>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">Unassigned</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{getStatusBadge(property.verificationStatus)}</TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setPropertyToAssign(property);
-                                setSelectedAgentId(property.assignedAgentId || 'unassign');
-                                setAssignAgentModalOpen(true);
-                              }}
-                              title="Assign Agent"
-                            >
-                              <UserPlus className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleVerifyProperty(property.id)}
-                              title={property.verificationStatus === 'verified' ? 'Already Verified' : 'Verify Property'}
-                              disabled={processing || property.verificationStatus === 'verified'}
-                            >
-                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setPropertyToEdit(property);
-                                setAddPropertyModalOpen(true);
-                              }}
-                              title="Edit Property"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => router.push(`/plots/${property.seoSlug}`)}
-                              title="View Property"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setPropertyToDelete(property);
-                                setPropertyDeleteConfirmOpen(true);
-                              }}
-                              title="Delete Property"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="overflow-x-auto -mx-6 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle">
+                    <div className="overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[150px]">Title</TableHead>
+                            <TableHead className="min-w-[100px]">Location</TableHead>
+                            <TableHead className="min-w-[120px]">Price</TableHead>
+                            <TableHead className="hidden md:table-cell min-w-[100px]">Owner</TableHead>
+                            <TableHead className="hidden lg:table-cell min-w-[100px]">Agent</TableHead>
+                            <TableHead className="min-w-[100px]">Status</TableHead>
+                            <TableHead className="text-right min-w-[200px] sticky right-0 bg-card">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {properties.map((property) => (
+                            <TableRow key={property.id}>
+                              <TableCell className="font-medium max-w-[200px] truncate">
+                                <a href={`/plots/${property.seoSlug}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary">
+                                  {property.title}
+                                </a>
+                              </TableCell>
+                              <TableCell>{property.city}</TableCell>
+                              <TableCell className="whitespace-nowrap">{formatPrice(property.price)}</TableCell>
+                              <TableCell className="hidden md:table-cell">{property.ownerName || 'N/A'}</TableCell>
+                              <TableCell className="hidden lg:table-cell">
+                                {property.assignedAgentName ? (
+                                  <span className="text-sm">{property.assignedAgentName}</span>
+                                ) : (
+                                  <span className="text-sm text-muted-foreground">Unassigned</span>
+                                )}
+                              </TableCell>
+                              <TableCell>{getStatusBadge(property.verificationStatus)}</TableCell>
+                              <TableCell className="text-right sticky right-0 bg-card">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      setPropertyToAssign(property);
+                                      setSelectedAgentId(property.assignedAgentId || 'unassign');
+                                      setAssignAgentModalOpen(true);
+                                    }}
+                                    title="Assign Agent"
+                                  >
+                                    <UserPlus className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleVerifyProperty(property.id)}
+                                    title={property.verificationStatus === 'verified' ? 'Already Verified' : 'Verify Property'}
+                                    disabled={processing || property.verificationStatus === 'verified'}
+                                  >
+                                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      setPropertyToEdit(property);
+                                      setAddPropertyModalOpen(true);
+                                    }}
+                                    title="Edit Property"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => router.push(`/plots/${property.seoSlug}`)}
+                                    title="View Property"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      setPropertyToDelete(property);
+                                      setPropertyDeleteConfirmOpen(true);
+                                    }}
+                                    title="Delete Property"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -666,12 +692,12 @@ export default function AdminDashboardPage() {
 
         <TabsContent value="agents" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
               <div>
                 <CardTitle>Agent Management</CardTitle>
-                <CardDescription>Manage agents and their access</CardDescription>
+                <CardDescription className="text-xs md:text-sm">Manage agents and their access</CardDescription>
               </div>
-              <Button onClick={openCreateUserModal}>
+              <Button onClick={openCreateUserModal} className="w-full sm:w-auto" size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add Agent
               </Button>
@@ -687,62 +713,74 @@ export default function AdminDashboardPage() {
                   <p className="text-muted-foreground">No agents found</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Employee ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {agents.map((agent) => (
-                      <TableRow key={agent.id}>
-                        <TableCell>
-                          <Badge variant="secondary" className="font-mono">
-                            {agent.employee_id || 'N/A'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{agent.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            {agent.email}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            {agent.phone}
-                          </div>
-                        </TableCell>
-                        <TableCell>{formatDate(agent.created_at)}</TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditUserModal(agent)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setUserToDelete(agent);
-                              setDeleteConfirmOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto -mx-6 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle">
+                    <div className="overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[100px]">Employee ID</TableHead>
+                            <TableHead className="min-w-[120px]">Name</TableHead>
+                            <TableHead className="hidden md:table-cell min-w-[180px]">Email</TableHead>
+                            <TableHead className="hidden lg:table-cell min-w-[120px]">Phone</TableHead>
+                            <TableHead className="hidden sm:table-cell min-w-[100px]">Joined</TableHead>
+                            <TableHead className="text-right min-w-[120px] sticky right-0 bg-card">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {agents.map((agent) => (
+                            <TableRow key={agent.id}>
+                              <TableCell>
+                                <Badge variant="secondary" className="font-mono text-xs">
+                                  {agent.employee_id || 'N/A'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-medium">{agent.name}</TableCell>
+                              <TableCell className="hidden md:table-cell">
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-4 w-4 text-muted-foreground" />
+                                  <span className="truncate max-w-[150px]">{agent.email}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="hidden lg:table-cell">
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4 text-muted-foreground" />
+                                  {agent.phone}
+                                </div>
+                              </TableCell>
+                              <TableCell className="hidden sm:table-cell">{formatDate(agent.created_at)}</TableCell>
+                              <TableCell className="text-right sticky right-0 bg-card">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => openEditUserModal(agent)}
+                                    title="Edit Agent"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      setUserToDelete(agent);
+                                      setDeleteConfirmOpen(true);
+                                    }}
+                                    title="Delete Agent"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -750,12 +788,12 @@ export default function AdminDashboardPage() {
 
         <TabsContent value="managers" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
               <div>
                 <CardTitle>Manager Management</CardTitle>
-                <CardDescription>Manage managers and their access</CardDescription>
+                <CardDescription className="text-xs md:text-sm">Manage managers and their access</CardDescription>
               </div>
-              <Button onClick={openCreateUserModal}>
+              <Button onClick={openCreateUserModal} className="w-full sm:w-auto" size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add Manager
               </Button>
@@ -771,62 +809,74 @@ export default function AdminDashboardPage() {
                   <p className="text-muted-foreground">No managers found</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Employee ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {managers.map((manager) => (
-                      <TableRow key={manager.id}>
-                        <TableCell>
-                          <Badge variant="secondary" className="font-mono">
-                            {manager.employee_id || 'N/A'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{manager.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            {manager.email}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            {manager.phone}
-                          </div>
-                        </TableCell>
-                        <TableCell>{formatDate(manager.created_at)}</TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditUserModal(manager)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setUserToDelete(manager);
-                              setDeleteConfirmOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto -mx-6 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle">
+                    <div className="overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[100px]">Employee ID</TableHead>
+                            <TableHead className="min-w-[120px]">Name</TableHead>
+                            <TableHead className="hidden md:table-cell min-w-[180px]">Email</TableHead>
+                            <TableHead className="hidden lg:table-cell min-w-[120px]">Phone</TableHead>
+                            <TableHead className="hidden sm:table-cell min-w-[100px]">Joined</TableHead>
+                            <TableHead className="text-right min-w-[120px] sticky right-0 bg-card">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {managers.map((manager) => (
+                            <TableRow key={manager.id}>
+                              <TableCell>
+                                <Badge variant="secondary" className="font-mono text-xs">
+                                  {manager.employee_id || 'N/A'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-medium">{manager.name}</TableCell>
+                              <TableCell className="hidden md:table-cell">
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-4 w-4 text-muted-foreground" />
+                                  <span className="truncate max-w-[150px]">{manager.email}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="hidden lg:table-cell">
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4 text-muted-foreground" />
+                                  {manager.phone}
+                                </div>
+                              </TableCell>
+                              <TableCell className="hidden sm:table-cell">{formatDate(manager.created_at)}</TableCell>
+                              <TableCell className="text-right sticky right-0 bg-card">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => openEditUserModal(manager)}
+                                    title="Edit Manager"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      setUserToDelete(manager);
+                                      setDeleteConfirmOpen(true);
+                                    }}
+                                    title="Delete Manager"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -836,7 +886,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>All Users</CardTitle>
-              <CardDescription>Complete list of platform users</CardDescription>
+              <CardDescription className="text-xs md:text-sm">Complete list of platform users</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -849,38 +899,46 @@ export default function AdminDashboardPage() {
                   <p className="text-muted-foreground">No users found</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Employee ID</TableHead>
-                      <TableHead>Joined</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.phone}</TableCell>
-                        <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell>
-                          {user.employee_id ? (
-                            <Badge variant="secondary" className="font-mono">
-                              {user.employee_id}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>{formatDate(user.created_at)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto -mx-6 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle">
+                    <div className="overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[120px]">Name</TableHead>
+                            <TableHead className="hidden md:table-cell min-w-[180px]">Email</TableHead>
+                            <TableHead className="hidden lg:table-cell min-w-[120px]">Phone</TableHead>
+                            <TableHead className="min-w-[100px]">Role</TableHead>
+                            <TableHead className="min-w-[100px]">Employee ID</TableHead>
+                            <TableHead className="hidden sm:table-cell min-w-[100px]">Joined</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {allUsers.map((user) => (
+                            <TableRow key={user.id}>
+                              <TableCell className="font-medium">{user.name}</TableCell>
+                              <TableCell className="hidden md:table-cell">
+                                <span className="truncate max-w-[150px] inline-block">{user.email}</span>
+                              </TableCell>
+                              <TableCell className="hidden lg:table-cell">{user.phone}</TableCell>
+                              <TableCell>{getRoleBadge(user.role)}</TableCell>
+                              <TableCell>
+                                {user.employee_id ? (
+                                  <Badge variant="secondary" className="font-mono text-xs">
+                                    {user.employee_id}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="hidden sm:table-cell">{formatDate(user.created_at)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -890,7 +948,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Leads Management</CardTitle>
-              <CardDescription>All property inquiry leads from interested customers</CardDescription>
+              <CardDescription className="text-xs md:text-sm">All property inquiry leads from interested customers</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -903,35 +961,41 @@ export default function AdminDashboardPage() {
                   <p className="text-muted-foreground">No leads found</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer Name</TableHead>
-                      <TableHead>Phone Number</TableHead>
-                      <TableHead>Property</TableHead>
-                      <TableHead>Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {leads.map((lead) => (
-                      <TableRow key={lead.id}>
-                        <TableCell className="font-medium">{lead.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <a href={`tel:${lead.phone}`} className="hover:text-primary">
-                              {lead.phone}
-                            </a>
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-[300px] truncate">
-                          {lead.propertyTitle}
-                        </TableCell>
-                        <TableCell>{formatDate(lead.createdAt)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto -mx-6 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle">
+                    <div className="overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[120px]">Customer Name</TableHead>
+                            <TableHead className="min-w-[130px]">Phone Number</TableHead>
+                            <TableHead className="min-w-[150px]">Property</TableHead>
+                            <TableHead className="min-w-[100px]">Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {leads.map((lead) => (
+                            <TableRow key={lead.id}>
+                              <TableCell className="font-medium">{lead.name}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4 text-muted-foreground" />
+                                  <a href={`tel:${lead.phone}`} className="hover:text-primary">
+                                    {lead.phone}
+                                  </a>
+                                </div>
+                              </TableCell>
+                              <TableCell className="max-w-[300px] truncate">
+                                {lead.propertyTitle}
+                              </TableCell>
+                              <TableCell>{formatDate(lead.createdAt)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>

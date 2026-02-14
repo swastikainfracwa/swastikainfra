@@ -56,15 +56,14 @@ interface Property {
   location: string;
   city: string;
   price: number;
-  property_type: string;
-  verification_status: string;
-  created_at: string;
-  owner_name?: string;
-  owner_phone?: string;
-  agent?: {
-    name: string;
-    phone: string;
-  };
+  propertyType: string;
+  verificationStatus: string;
+  createdAt: Date;
+  ownerName?: string;
+  ownerPhone?: string;
+  assignedAgentId?: string | null;
+  assignedAgentName?: string;
+  assignedAgentPhone?: string;
 }
 
 interface Agent {
@@ -141,9 +140,13 @@ export default function ManagerDashboardPage() {
 
       const allProperties = propertiesData.properties;
       
-      // Filter properties by status
-      const pending = allProperties.filter((p: Property) => p.verification_status === 'pending');
-      const submitted = allProperties.filter((p: Property) => p.verification_status === 'submitted');
+      // Filter properties by assignment status
+      // Pending Assignment: Properties without assigned agents (excluding rejected ones)
+      const pending = allProperties.filter((p: Property) => 
+        !p.assignedAgentId && p.verificationStatus !== 'rejected'
+      );
+      // Under Review: Properties submitted by agents for manager verification
+      const submitted = allProperties.filter((p: Property) => p.verificationStatus === 'submitted');
       
       setPendingProperties(pending);
       setSubmittedProperties(submitted);
@@ -309,8 +312,8 @@ export default function ManagerDashboardPage() {
     }).format(price);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (date: string | Date) => {
+    return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -405,11 +408,11 @@ export default function ManagerDashboardPage() {
                         <TableCell>{formatPrice(property.price)}</TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            <div>{property.owner_name || 'N/A'}</div>
-                            <div className="text-muted-foreground">{property.owner_phone}</div>
+                            <div>{property.ownerName || 'N/A'}</div>
+                            <div className="text-muted-foreground">{property.ownerPhone}</div>
                           </div>
                         </TableCell>
-                        <TableCell>{formatDate(property.created_at)}</TableCell>
+                        <TableCell>{formatDate(property.createdAt)}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             size="sm"
@@ -466,11 +469,11 @@ export default function ManagerDashboardPage() {
                         <TableCell>{formatPrice(property.price)}</TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            <div>{property.agent?.name || 'N/A'}</div>
-                            <div className="text-muted-foreground">{property.agent?.phone}</div>
+                            <div>{property.assignedAgentName || 'N/A'}</div>
+                            <div className="text-muted-foreground">{property.assignedAgentPhone}</div>
                           </div>
                         </TableCell>
-                        <TableCell>{formatDate(property.created_at)}</TableCell>
+                        <TableCell>{formatDate(property.createdAt)}</TableCell>
                         <TableCell className="text-right space-x-2">
                           <Button
                             variant="outline"
