@@ -64,16 +64,24 @@ export async function POST(request: NextRequest) {
 
     const userRole = (session.user as any).role;
 
-    // Only admin can create agents and managers
-    if (userRole !== 'admin') {
+    // Admins can create agents/managers, business partners can only create agents
+    if (!['admin', 'business_partner'].includes(userRole)) {
       return NextResponse.json(
-        { error: 'Forbidden - Only admins can create staff accounts' },
+        { error: 'Forbidden - Only admins and business partners can create staff accounts' },
         { status: 403 }
       );
     }
 
     const body = await request.json();
-    const { name, email, phone, password, role = 'agent' } = body;
+    const { name, email, phone, password, role = 'agent', address, created_by } = body;
+
+    // Business partners can only create agents, not managers
+    if (userRole === 'business_partner' && role !== 'agent') {
+      return NextResponse.json(
+        { error: 'Business partners can only create agent accounts' },
+        { status: 403 }
+      );
+    }
 
     // Validate role
     if (role !== 'agent' && role !== 'manager') {
@@ -84,9 +92,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
-    if (!name || !email || !phone || !password) {
+    if (!name || !email || !phone || !password || !address) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields (name, email, phone, address, password required)' },
         { status: 400 }
       );
     }
@@ -127,11 +135,13 @@ export async function POST(request: NextRequest) {
         email,
         name,
         phone,
+        address,
         role: role,
         password_hash: passwordHash,
+        created_by: created_by || null,
         enable_2fa: false,
       })
-      .select('id, name, email, phone, role, employee_id, created_at')
+      .select('id, name, email, phone, address, role, employee_id, created_at')
       .single();
 
     if (createError) {

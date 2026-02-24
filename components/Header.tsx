@@ -30,6 +30,7 @@ export default function Header() {
       case 'admin': return '/admin';
       case 'manager': return '/manager';
       case 'agent': return '/agent';
+      case 'business_partner': return '/business-partner';
       case 'owner': return '/dashboard';
       default: return '/';
     }
@@ -44,7 +45,7 @@ export default function Header() {
       .slice(0, 2);
   };
 
-  const isStaff = user && ['admin', 'manager', 'agent'].includes(user.role);
+  const isStaff = user && ['admin', 'manager', 'agent', 'business_partner'].includes(user.role);
 
   // Navigation links for regular users
   const publicNavLinks: { label: string; href: string; icon?: React.ComponentType<{ className?: string }> }[] = [

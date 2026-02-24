@@ -132,7 +132,7 @@ export default function SearchBar({ variant = 'compact', className }: SearchBarP
         {isHero && (
           <div className="hidden lg:flex items-end gap-2">
             <div className="w-[120px]">
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Min Price</Label>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Min Price (₹/sq ft)</Label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -146,7 +146,7 @@ export default function SearchBar({ variant = 'compact', className }: SearchBarP
             </div>
             <span className="text-muted-foreground pb-2">-</span>
             <div className="w-[120px]">
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Max Price</Label>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Max Price (₹/sq ft)</Label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -179,7 +179,7 @@ export default function SearchBar({ variant = 'compact', className }: SearchBarP
             <div className="space-y-6 mt-6">
               {/* Price Range */}
               <div className="space-y-3">
-                <Label>Price Range (₹)</Label>
+                <Label>Price Range (₹/sq ft)</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     placeholder="Min"

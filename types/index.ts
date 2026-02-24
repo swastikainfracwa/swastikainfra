@@ -1,5 +1,5 @@
 // User types
-export type UserRole = 'visitor' | 'owner' | 'agent' | 'manager' | 'admin';
+export type UserRole = 'visitor' | 'owner' | 'agent' | 'manager' | 'admin' | 'business_partner';
 
 export interface User {
   id: string;
@@ -8,7 +8,12 @@ export interface User {
   email: string;
   role: UserRole;
   employeeId?: string; // Auto-generated for agents and managers (format: SWI001, SWI002, etc.)
+  address?: string;
+  created_by?: string;
+  created_by_name?: string;
   enable_2fa?: boolean;
+  reset_token?: string;
+  reset_token_expires?: string;
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -24,7 +29,11 @@ export interface Database {
           phone: string;
           email: string;
           role: UserRole;
+          address: string | null;
+          created_by: string | null;
           enable_2fa: boolean;
+          reset_token: string | null;
+          reset_token_expires: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -34,13 +43,21 @@ export interface Database {
           phone: string;
           email: string;
           role: UserRole;
+          address?: string;
+          created_by?: string;
           enable_2fa?: boolean;
+          reset_token?: string;
+          reset_token_expires?: string;
         };
         Update: {
           name?: string;
           phone?: string;
           role?: UserRole;
+          address?: string;
+          created_by?: string;
           enable_2fa?: boolean;
+          reset_token?: string;
+          reset_token_expires?: string;
         };
       };
       properties: {

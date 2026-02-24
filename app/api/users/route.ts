@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
 
     const userRole = (session.user as any).role;
 
-    // Only managers and admins can fetch users
-    if (!['manager', 'admin'].includes(userRole)) {
+    // Only managers, admins, and business partners can fetch users
+    if (!['manager', 'admin', 'business_partner'].includes(userRole)) {
       return NextResponse.json(
-        { error: 'Forbidden - Manager or Admin access required' },
+        { error: 'Forbidden - Manager, Admin, or Business Partner access required' },
         { status: 403 }
       );
     }
@@ -31,12 +31,17 @@ export async function GET(request: NextRequest) {
     
     let query = supabase
       .from('profiles')
-      .select('id, name, email, phone, role, employee_id, created_at')
+      .select('id, name, email, phone, address, role, employee_id, created_by, created_at')
       .order('created_at', { ascending: false });
 
     // Filter by role if specified
     if (role) {
       query = query.eq('role', role);
+    }
+
+    // Business partners can only see users they created
+    if (userRole === 'business_partner') {
+      query = query.eq('created_by', (session.user as any).id);
     }
 
     const { data: users, error } = await query;
@@ -81,12 +86,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, email, phone, role, password } = body;
+    const { name, email, phone, role, password, address } = body;
 
     // Validation
     if (!name || !email || !phone || !role || !password) {
       return NextResponse.json(
         { error: 'All fields are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate address for roles that require it
+    if (['agent', 'manager', 'business_partner'].includes(role) && !address) {
+      return NextResponse.json(
+        { error: 'Address is required for agents, managers, and business partners' },
         { status: 400 }
       );
     }
@@ -98,7 +111,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validRoles = ['visitor', 'owner', 'agent', 'manager', 'admin'];
+    const validRoles = ['visitor', 'owner', 'agent', 'manager', 'admin', 'business_partner'];
     if (!validRoles.includes(role)) {
       return NextResponse.json(
         { error: 'Invalid role' },
@@ -134,6 +147,7 @@ export async function POST(request: NextRequest) {
         name,
         phone,
         role,
+        address: address || null,
       },
     });
 
@@ -162,8 +176,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Profile after trigger:', profileCheck);
 
-    // If employee_id is missing for agent/manager, generate it manually
-    if (profileCheck && (profileCheck.role === 'agent' || profileCheck.role === 'manager') && !profileCheck.employee_id) {
+    // If employee_id is missing for agent/manager/business_partner, generate it manually
+    if (profileCheck && ['agent', 'manager', 'business_partner'].includes(profileCheck.role) && !profileCheck.employee_id) {
       console.warn('Employee ID was not set by trigger, generating manually...');
       
       // Call the generate_employee_id function directly

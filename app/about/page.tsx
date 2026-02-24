@@ -22,11 +22,11 @@ export default function AboutPage() {
           <div className="max-w-3xl mx-auto text-center">
             <div className="flex justify-center mb-8">
               <Image
-                src="/Swastika%20logo.png"
+                src="/About%20logo.png"
                 alt="Swastika Infrastructures"
-                width={120}
-                height={120}
-                className="h-24 w-24 md:h-32 md:w-32 object-contain"
+                width={300}
+                height={300}
+                className="h-40 w-40 md:h-64 md:w-64 object-contain rounded-full border-4 border-primary shadow-lg"
                 priority
               />
             </div>

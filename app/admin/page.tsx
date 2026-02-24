@@ -14,6 +14,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Eye,
+  EyeOff,
   Plus,
   MessageCircle,
 } from 'lucide-react';
@@ -57,6 +58,7 @@ interface User {
   phone: string;
   role: string;
   employee_id?: string;
+  address?: string;
   created_at: string;
 }
 
@@ -97,6 +99,7 @@ interface Stats {
   totalUsers: number;
   totalAgents: number;
   totalManagers: number;
+  totalBusinessPartners: number;
   totalProperties: number;
   verifiedProperties: number;
   totalLeads: number;
@@ -107,12 +110,14 @@ export default function AdminDashboardPage() {
     totalUsers: 0,
     totalAgents: 0,
     totalManagers: 0,
+    totalBusinessPartners: 0,
     totalProperties: 0,
     verifiedProperties: 0,
     totalLeads: 0,
   });
   const [agents, setAgents] = useState<User[]>([]);
   const [managers, setManagers] = useState<User[]>([]);
+  const [businessPartners, setBusinessPartners] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -138,7 +143,9 @@ export default function AdminDashboardPage() {
     phone: '',
     role: 'agent',
     password: '',
+    address: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -155,14 +162,17 @@ export default function AdminDashboardPage() {
       let users: User[] = [];
       let agentsList: User[] = [];
       let managersList: User[] = [];
+      let businessPartnersList: User[] = [];
       
       if (usersRes.ok) {
         users = usersData.users || [];
         agentsList = users.filter((u: User) => u.role === 'agent');
         managersList = users.filter((u: User) => u.role === 'manager');
+        businessPartnersList = users.filter((u: User) => u.role === 'business_partner');
         setAllUsers(users);
         setAgents(agentsList);
         setManagers(managersList);
+        setBusinessPartners(businessPartnersList);
       }
 
       // Fetch all properties
@@ -190,6 +200,7 @@ export default function AdminDashboardPage() {
           totalUsers: users.length,
           totalAgents: agentsList.length,
           totalManagers: managersList.length,
+          totalBusinessPartners: businessPartnersList.length,
           totalProperties: properties.length,
           verifiedProperties: verified.length,
           totalLeads: leadsData.length,
@@ -223,6 +234,7 @@ export default function AdminDashboardPage() {
       phone: '',
       role: 'agent',
       password: '',
+      address: '',
     });
     setUserModalOpen(true);
   };
@@ -235,6 +247,7 @@ export default function AdminDashboardPage() {
       phone: user.phone,
       role: user.role,
       password: '',
+      address: user.address || '',
     });
     setUserModalOpen(true);
   };
@@ -244,6 +257,16 @@ export default function AdminDashboardPage() {
       toast({
         title: 'Validation Error',
         description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate address for roles that require it
+    if (!editingUser && (formData.role === 'agent' || formData.role === 'manager' || formData.role === 'business_partner') && !formData.address) {
+      toast({
+        title: 'Validation Error',
+        description: 'Address is required for agents, managers, and business partners',
         variant: 'destructive',
       });
       return;
@@ -460,14 +483,16 @@ export default function AdminDashboardPage() {
       admin: { className: 'bg-red-500/10 text-red-700 border-red-500/20' },
       manager: { className: 'bg-purple-500/10 text-purple-700 border-purple-500/20' },
       agent: { className: 'bg-blue-500/10 text-blue-700 border-blue-500/20' },
+      business_partner: { className: 'bg-orange-500/10 text-orange-700 border-orange-500/20' },
       owner: { className: 'bg-green-500/10 text-green-700 border-green-500/20' },
       visitor: { className: 'bg-gray-500/10 text-gray-700 border-gray-500/20' },
     };
 
     const variant = variants[role] || variants.visitor;
+    const label = role === 'business_partner' ? 'Business Partner' : role.charAt(0).toUpperCase() + role.slice(1);
     return (
       <Badge variant="outline" className={variant.className}>
-        {role.charAt(0).toUpperCase() + role.slice(1)}
+        {label}
       </Badge>
     );
   };
@@ -539,7 +564,7 @@ export default function AdminDashboardPage() {
       {/* User Management */}
       <Tabs defaultValue="properties" className="space-y-4 w-full">
         <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <TabsList className="grid w-full min-w-[300px] grid-cols-3 lg:grid-cols-5 h-auto">
+          <TabsList className="grid w-full min-w-[300px] grid-cols-3 lg:grid-cols-6 h-auto">
             <TabsTrigger value="properties" className="text-xs md:text-sm py-2 px-1 md:px-2">
               <span className="block leading-tight">Properties</span>
               <span className="text-[10px] md:text-xs">({stats.totalProperties})</span>
@@ -552,7 +577,11 @@ export default function AdminDashboardPage() {
               <span className="block leading-tight">Managers</span>
               <span className="text-[10px] md:text-xs">({stats.totalManagers})</span>
             </TabsTrigger>
-            <TabsTrigger value="leads" className="text-xs md:text-sm lg:col-start-4 py-2 px-1 md:px-2">
+            <TabsTrigger value="business-partners" className="text-xs md:text-sm py-2 px-1 md:px-2">
+              <span className="block leading-tight">Partners</span>
+              <span className="text-[10px] md:text-xs">({stats.totalBusinessPartners})</span>
+            </TabsTrigger>
+            <TabsTrigger value="leads" className="text-xs md:text-sm py-2 px-1 md:px-2">
               <span className="block leading-tight">Leads</span>
               <span className="text-[10px] md:text-xs">({stats.totalLeads})</span>
             </TabsTrigger>
@@ -722,9 +751,10 @@ export default function AdminDashboardPage() {
                         <TableHeader>
                           <TableRow>
                             <TableHead className="min-w-[100px]">Employee ID</TableHead>
-                            <TableHead className="min-w-[120px]">Name</TableHead>
-                            <TableHead className="hidden md:table-cell min-w-[180px]">Email</TableHead>
-                            <TableHead className="hidden lg:table-cell min-w-[120px]">Phone</TableHead>
+                            <TableHead className="min-w-[120px]">Full Name</TableHead>
+                            <TableHead className="min-w-[180px]">Email</TableHead>
+                            <TableHead className="min-w-[120px]">Mobile</TableHead>
+                            <TableHead className="hidden lg:table-cell min-w-[150px]">Address</TableHead>
                             <TableHead className="hidden sm:table-cell min-w-[100px]">Joined</TableHead>
                             <TableHead className="text-right min-w-[120px] sticky right-0 bg-card">Actions</TableHead>
                           </TableRow>
@@ -738,17 +768,20 @@ export default function AdminDashboardPage() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="font-medium">{agent.name}</TableCell>
-                              <TableCell className="hidden md:table-cell">
+                              <TableCell>
                                 <div className="flex items-center gap-2">
                                   <Mail className="h-4 w-4 text-muted-foreground" />
                                   <span className="truncate max-w-[150px]">{agent.email}</span>
                                 </div>
                               </TableCell>
-                              <TableCell className="hidden lg:table-cell">
+                              <TableCell>
                                 <div className="flex items-center gap-2">
                                   <Phone className="h-4 w-4 text-muted-foreground" />
                                   {agent.phone}
                                 </div>
+                              </TableCell>
+                              <TableCell className="hidden lg:table-cell">
+                                <span className="truncate max-w-[150px] inline-block">{agent.address || '—'}</span>
                               </TableCell>
                               <TableCell className="hidden sm:table-cell">{formatDate(agent.created_at)}</TableCell>
                               <TableCell className="text-right sticky right-0 bg-card">
@@ -818,9 +851,10 @@ export default function AdminDashboardPage() {
                         <TableHeader>
                           <TableRow>
                             <TableHead className="min-w-[100px]">Employee ID</TableHead>
-                            <TableHead className="min-w-[120px]">Name</TableHead>
-                            <TableHead className="hidden md:table-cell min-w-[180px]">Email</TableHead>
-                            <TableHead className="hidden lg:table-cell min-w-[120px]">Phone</TableHead>
+                            <TableHead className="min-w-[120px]">Full Name</TableHead>
+                            <TableHead className="min-w-[180px]">Email</TableHead>
+                            <TableHead className="min-w-[120px]">Mobile</TableHead>
+                            <TableHead className="hidden lg:table-cell min-w-[150px]">Address</TableHead>
                             <TableHead className="hidden sm:table-cell min-w-[100px]">Joined</TableHead>
                             <TableHead className="text-right min-w-[120px] sticky right-0 bg-card">Actions</TableHead>
                           </TableRow>
@@ -834,17 +868,20 @@ export default function AdminDashboardPage() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="font-medium">{manager.name}</TableCell>
-                              <TableCell className="hidden md:table-cell">
+                              <TableCell>
                                 <div className="flex items-center gap-2">
                                   <Mail className="h-4 w-4 text-muted-foreground" />
                                   <span className="truncate max-w-[150px]">{manager.email}</span>
                                 </div>
                               </TableCell>
-                              <TableCell className="hidden lg:table-cell">
+                              <TableCell>
                                 <div className="flex items-center gap-2">
                                   <Phone className="h-4 w-4 text-muted-foreground" />
                                   {manager.phone}
                                 </div>
+                              </TableCell>
+                              <TableCell className="hidden lg:table-cell">
+                                <span className="truncate max-w-[150px] inline-block">{manager.address || '—'}</span>
                               </TableCell>
                               <TableCell className="hidden sm:table-cell">{formatDate(manager.created_at)}</TableCell>
                               <TableCell className="text-right sticky right-0 bg-card">
@@ -867,6 +904,106 @@ export default function AdminDashboardPage() {
                                       setDeleteConfirmOpen(true);
                                     }}
                                     title="Delete Manager"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="business-partners" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+              <div>
+                <CardTitle>Business Partner Management</CardTitle>
+                <CardDescription className="text-xs md:text-sm">Manage business partners and their access</CardDescription>
+              </div>
+              <Button onClick={openCreateUserModal} className="w-full sm:w-auto" size="sm">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Business Partner
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                </div>
+              ) : businessPartners.length === 0 ? (
+                <div className="text-center py-12">
+                  <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No business partners found</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto -mx-6 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle">
+                    <div className="overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[100px]">Employee ID</TableHead>
+                            <TableHead className="min-w-[120px]">Full Name</TableHead>
+                            <TableHead className="min-w-[180px]">Email</TableHead>
+                            <TableHead className="min-w-[120px]">Mobile</TableHead>
+                            <TableHead className="hidden lg:table-cell min-w-[150px]">Address</TableHead>
+                            <TableHead className="hidden sm:table-cell min-w-[100px]">Joined</TableHead>
+                            <TableHead className="text-right min-w-[120px] sticky right-0 bg-card">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {businessPartners.map((partner) => (
+                            <TableRow key={partner.id}>
+                              <TableCell>
+                                <Badge variant="secondary" className="font-mono text-xs">
+                                  {partner.employee_id || 'N/A'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-medium">{partner.name}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-4 w-4 text-muted-foreground" />
+                                  <span className="truncate max-w-[150px]">{partner.email}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4 text-muted-foreground" />
+                                  {partner.phone}
+                                </div>
+                              </TableCell>
+                              <TableCell className="hidden lg:table-cell">
+                                <span className="truncate max-w-[150px] inline-block">{partner.address || '—'}</span>
+                              </TableCell>
+                              <TableCell className="hidden sm:table-cell">{formatDate(partner.created_at)}</TableCell>
+                              <TableCell className="text-right sticky right-0 bg-card">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => openEditUserModal(partner)}
+                                    title="Edit Business Partner"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      setUserToDelete(partner);
+                                      setDeleteConfirmOpen(true);
+                                    }}
+                                    title="Delete Business Partner"
                                   >
                                     <Trash2 className="h-4 w-4 text-red-600" />
                                   </Button>
@@ -907,9 +1044,9 @@ export default function AdminDashboardPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="min-w-[120px]">Name</TableHead>
-                            <TableHead className="hidden md:table-cell min-w-[180px]">Email</TableHead>
-                            <TableHead className="hidden lg:table-cell min-w-[120px]">Phone</TableHead>
+                            <TableHead className="min-w-[120px]">Full Name</TableHead>
+                            <TableHead className="min-w-[180px]">Email</TableHead>
+                            <TableHead className="min-w-[120px]">Mobile</TableHead>
                             <TableHead className="min-w-[100px]">Role</TableHead>
                             <TableHead className="min-w-[100px]">Employee ID</TableHead>
                             <TableHead className="hidden sm:table-cell min-w-[100px]">Joined</TableHead>
@@ -919,10 +1056,10 @@ export default function AdminDashboardPage() {
                           {allUsers.map((user) => (
                             <TableRow key={user.id}>
                               <TableCell className="font-medium">{user.name}</TableCell>
-                              <TableCell className="hidden md:table-cell">
+                              <TableCell>
                                 <span className="truncate max-w-[150px] inline-block">{user.email}</span>
                               </TableCell>
-                              <TableCell className="hidden lg:table-cell">{user.phone}</TableCell>
+                              <TableCell>{user.phone}</TableCell>
                               <TableCell>{getRoleBadge(user.role)}</TableCell>
                               <TableCell>
                                 {user.employee_id ? (
@@ -1053,20 +1190,42 @@ export default function AdminDashboardPage() {
                   <SelectItem value="agent">Agent</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
                   <SelectItem value="owner">Owner</SelectItem>
+                  <SelectItem value="business_partner">Business Partner</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {(formData.role === 'agent' || formData.role === 'manager' || formData.role === 'business_partner') && (
+              <div>
+                <Label htmlFor="address">Address {!editingUser && '*'}</Label>
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="Enter full address"
+                />
+              </div>
+            )}
             {!editingUser && (
               <div>
                 <Label htmlFor="password">Password *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Minimum 6 characters"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Minimum 6 characters"
+                    className="pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
             )}
           </div>

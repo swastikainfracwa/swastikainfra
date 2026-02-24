@@ -196,9 +196,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify staff permission if isStaffCreated is true
-    if (isStaffCreated && !['admin', 'manager', 'agent'].includes(userRole)) {
+    if (isStaffCreated && !['admin', 'manager', 'agent', 'business_partner'].includes(userRole)) {
       return NextResponse.json(
-        { error: 'Forbidden: Only staff can create pre-verified properties' },
+        { error: 'Forbidden: Only staff and business partners can create pre-verified properties' },
         { status: 403 }
       );
     }
@@ -236,6 +236,7 @@ export async function POST(request: NextRequest) {
         owner_id: session.user.id,
         owner_name: session.user.name || '',
         owner_phone: isStaffCreated ? (session.user as any).phone : ownerContactNumber,
+        created_by: session.user.id,
         verification_status: verificationStatus,
         verification_badge: verificationBadge,
         is_staff_created: isStaffCreated,

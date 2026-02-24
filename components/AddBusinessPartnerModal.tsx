@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, User, UserCog, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Briefcase, Eye, EyeOff } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -25,56 +25,45 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
-const staffSchema = z.object({
+const businessPartnerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
   address: z.string().min(10, 'Address must be at least 10 characters'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  role: z.enum(['agent', 'manager']),
 });
 
-type StaffFormData = z.infer<typeof staffSchema>;
+type BusinessPartnerFormData = z.infer<typeof businessPartnerSchema>;
 
-interface AddAgentModalProps {
+interface AddBusinessPartnerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  allowManagerRole?: boolean; // If false, only agent role is available
 }
 
-export const AddAgentModal: React.FC<AddAgentModalProps> = ({
+export const AddBusinessPartnerModal: React.FC<AddBusinessPartnerModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  allowManagerRole = true, // Default to true for backward compatibility
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const form = useForm<StaffFormData>({
-    resolver: zodResolver(staffSchema),
+  const form = useForm<BusinessPartnerFormData>({
+    resolver: zodResolver(businessPartnerSchema),
     defaultValues: {
       name: '',
       email: '',
       phone: '',
       address: '',
       password: '',
-      role: 'agent', // Always default to agent
     },
   });
 
-  const onSubmit = async (data: StaffFormData) => {
+  const onSubmit = async (data: BusinessPartnerFormData) => {
     try {
       setIsSubmitting(true);
 
@@ -85,6 +74,7 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
         },
         body: JSON.stringify({
           ...data,
+          role: 'business_partner',
           created_by: user?.id,
         }),
       });
@@ -92,25 +82,24 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || `Failed to create ${data.role}`);
+        throw new Error(result.error || 'Failed to create business partner');
       }
 
-      const roleLabel = data.role === 'agent' ? 'Agent' : 'Manager';
       const employeeId = result.staff?.employee_id || result.agent?.employee_id;
 
       toast({
-        title: `${roleLabel} Created!`,
-        description: `${data.name} has been added as a ${data.role}${employeeId ? ` with employee ID: ${employeeId}` : ''}.`,
+        title: 'Business Partner Created!',
+        description: `${data.name} has been added as a business partner${employeeId ? ` with employee ID: ${employeeId}` : ''}.`,
       });
 
       form.reset();
       onSuccess?.();
       onClose();
     } catch (error: any) {
-      console.error('Staff creation error:', error);
+      console.error('Business partner creation error:', error);
       toast({
         title: 'Creation Failed',
-        description: error.message || 'Failed to create staff member. Please try again.',
+        description: error.message || 'Failed to create business partner. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -123,46 +112,16 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {form.watch('role') === 'manager' ? (
-              <UserCog className="h-5 w-5" />
-            ) : (
-              <User className="h-5 w-5" />
-            )}
-            {allowManagerRole ? 'Add Staff Member' : 'Add Agent'}
+            <Briefcase className="h-5 w-5" />
+            Add Business Partner
           </DialogTitle>
           <DialogDescription>
-            {allowManagerRole 
-              ? 'Create a new agent or manager account. Employee ID will be automatically assigned.'
-              : 'Create a new agent account. Employee ID will be automatically assigned.'}
+            Create a new business partner account. They can add properties and agents. Employee ID will be automatically assigned.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {allowManagerRole && (
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="agent">Agent</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
             <FormField
               control={form.control}
               name="name"
@@ -184,7 +143,7 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="agent@example.com" {...field} />
+                    <Input type="email" placeholder="partner@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -273,7 +232,7 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
                     Creating...
                   </>
                 ) : (
-                  `Create ${form.watch('role') === 'manager' ? 'Manager' : 'Agent'}`
+                  'Create Business Partner'
                 )}
               </Button>
             </div>

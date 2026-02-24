@@ -150,7 +150,7 @@ export default function HomePage() {
           <div className="max-w-3xl mx-auto text-center mb-8">
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4">
               Find Your Perfect
-              <span className="text-primary block">Plot of Land</span>
+              <span className="text-primary block">Deal</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Discover verified residential, commercial, and agricultural plots across India. 

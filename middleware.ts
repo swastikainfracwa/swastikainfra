@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
     '/contact',
     '/login',
     '/signup',
+    '/reset-password',
     '/privacy',
     '/terms',
   ];
@@ -36,6 +37,8 @@ export async function middleware(request: NextRequest) {
       url.pathname = '/manager';
     } else if (userRole === 'agent') {
       url.pathname = '/agent';
+    } else if (userRole === 'business_partner') {
+      url.pathname = '/business-partner';
     }
     // Owners stay on home page and can access their dashboard via navigation
     
@@ -66,6 +69,7 @@ export async function middleware(request: NextRequest) {
     '/agent': ['agent'],
     '/manager': ['manager', 'admin'],
     '/admin': ['admin'],
+    '/business-partner': ['business_partner'],
   };
 
   // Check if the route requires specific roles
@@ -82,6 +86,8 @@ export async function middleware(request: NextRequest) {
           url.pathname = '/manager';
         } else if (userRole === 'admin') {
           url.pathname = '/admin';
+        } else if (userRole === 'business_partner') {
+          url.pathname = '/business-partner';
         } else {
           url.pathname = '/';
         }
