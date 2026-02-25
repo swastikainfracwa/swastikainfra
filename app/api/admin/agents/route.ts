@@ -53,12 +53,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Format the response to include creator information
-    const formattedAgents = agents?.map(agent => ({
-      ...agent,
-      created_by_name: agent.creator?.name || null,
-      created_by_role: agent.creator?.role || null,
-      created_by_employee_id: agent.creator?.employee_id || null,
-    })) || [];
+    const formattedAgents = agents?.map(agent => {
+      const creator = Array.isArray(agent.creator) ? agent.creator[0] : agent.creator;
+      return {
+        ...agent,
+        created_by_name: creator?.name || null,
+        created_by_role: creator?.role || null,
+        created_by_employee_id: creator?.employee_id || null,
+      };
+    }) || [];
 
     return NextResponse.json({ agents: formattedAgents });
   } catch (error) {
