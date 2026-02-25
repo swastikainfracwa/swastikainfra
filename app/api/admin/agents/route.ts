@@ -29,7 +29,18 @@ export async function GET(request: NextRequest) {
 
     const { data: agents, error } = await adminClient
       .from('profiles')
-      .select('id, name, email, phone, role, created_at')
+      .select(`
+        id, 
+        name, 
+        email, 
+        phone, 
+        role, 
+        employee_id,
+        address,
+        created_at,
+        created_by,
+        creator:created_by(name, role, employee_id)
+      `)
       .eq('role', 'agent')
       .order('created_at', { ascending: false });
 
@@ -41,7 +52,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ agents: agents || [] });
+    // Format the response to include creator information
+    const formattedAgents = agents?.map(agent => ({
+      ...agent,
+      created_by_name: agent.creator?.name || null,
+      created_by_role: agent.creator?.role || null,
+      created_by_employee_id: agent.creator?.employee_id || null,
+    })) || [];
+
+    return NextResponse.json({ agents: formattedAgents });
   } catch (error) {
     console.error('Agents GET error:', error);
     return NextResponse.json(

@@ -60,6 +60,9 @@ interface User {
   employee_id?: string;
   address?: string;
   created_at: string;
+  created_by_name?: string;
+  created_by_role?: string;
+  created_by_employee_id?: string;
 }
 
 interface Property {
@@ -755,6 +758,7 @@ export default function AdminDashboardPage() {
                             <TableHead className="min-w-[180px]">Email</TableHead>
                             <TableHead className="min-w-[120px]">Mobile</TableHead>
                             <TableHead className="hidden lg:table-cell min-w-[150px]">Address</TableHead>
+                            <TableHead className="hidden md:table-cell min-w-[120px]">Referred By</TableHead>
                             <TableHead className="hidden sm:table-cell min-w-[100px]">Joined</TableHead>
                             <TableHead className="text-right min-w-[120px] sticky right-0 bg-card">Actions</TableHead>
                           </TableRow>
@@ -782,6 +786,26 @@ export default function AdminDashboardPage() {
                               </TableCell>
                               <TableCell className="hidden lg:table-cell">
                                 <span className="truncate max-w-[150px] inline-block">{agent.address || '—'}</span>
+                              </TableCell>
+                              <TableCell className="hidden md:table-cell">
+                                {agent.created_by_employee_id || agent.created_by_name ? (
+                                  <div className="flex flex-col">
+                                    {agent.created_by_employee_id ? (
+                                      <Badge variant="secondary" className="font-mono text-xs w-fit">
+                                        {agent.created_by_employee_id}
+                                      </Badge>
+                                    ) : (
+                                      <span className="font-medium text-sm">{agent.created_by_name}</span>
+                                    )}
+                                    {agent.created_by_role && (
+                                      <Badge variant="outline" className="text-xs w-fit mt-1">
+                                        {agent.created_by_role}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
                               </TableCell>
                               <TableCell className="hidden sm:table-cell">{formatDate(agent.created_at)}</TableCell>
                               <TableCell className="text-right sticky right-0 bg-card">
