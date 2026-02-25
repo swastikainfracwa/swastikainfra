@@ -229,13 +229,13 @@ export default function AdminDashboardPage() {
     fetchDashboardData();
   }, [user, router, fetchDashboardData]);
 
-  const openCreateUserModal = () => {
+  const openCreateUserModal = (defaultRole: string = 'agent') => {
     setEditingUser(null);
     setFormData({
       name: '',
       email: '',
       phone: '',
-      role: 'agent',
+      role: defaultRole,
       password: '',
       address: '',
     });
@@ -731,7 +731,7 @@ export default function AdminDashboardPage() {
                 <CardTitle>Agent Management</CardTitle>
                 <CardDescription className="text-xs md:text-sm">Manage agents and their access</CardDescription>
               </div>
-              <Button onClick={openCreateUserModal} className="w-full sm:w-auto" size="sm">
+              <Button onClick={() => openCreateUserModal('agent')} className="w-full sm:w-auto" size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add Agent
               </Button>
@@ -852,7 +852,7 @@ export default function AdminDashboardPage() {
                 <CardTitle>Manager Management</CardTitle>
                 <CardDescription className="text-xs md:text-sm">Manage managers and their access</CardDescription>
               </div>
-              <Button onClick={openCreateUserModal} className="w-full sm:w-auto" size="sm">
+              <Button onClick={() => openCreateUserModal('manager')} className="w-full sm:w-auto" size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add Manager
               </Button>
@@ -952,7 +952,7 @@ export default function AdminDashboardPage() {
                 <CardTitle>Business Partner Management</CardTitle>
                 <CardDescription className="text-xs md:text-sm">Manage business partners and their access</CardDescription>
               </div>
-              <Button onClick={openCreateUserModal} className="w-full sm:w-auto" size="sm">
+              <Button onClick={() => openCreateUserModal('business_partner')} className="w-full sm:w-auto" size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add Business Partner
               </Button>
