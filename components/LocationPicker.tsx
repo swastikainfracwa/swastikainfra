@@ -1,12 +1,32 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Loader2, MapPin, Navigation } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+// Cached promise — ensures setOptions + importLibrary are only called once
+let _mapsLoadPromise: Promise<void> | null = null;
+
+function loadGoogleMaps(apiKey: string): Promise<void> {
+  if (_mapsLoadPromise !== null) return _mapsLoadPromise;
+  setOptions({ key: apiKey, v: 'weekly' });
+  _mapsLoadPromise = Promise.all([
+    importLibrary('maps'),
+    importLibrary('places'),
+    importLibrary('geocoding'),
+    importLibrary('marker'),
+  ])
+    .then(() => undefined)
+    .catch((err: unknown) => {
+      _mapsLoadPromise = null;
+      throw err;
+    });
+  return _mapsLoadPromise;
+}
 
 interface LocationData {
   address: string;
@@ -28,10 +48,9 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   className,
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [marker, setMarker] = useState<google.maps.Marker | null>(null);
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(value || null);
@@ -51,98 +70,93 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       return;
     }
 
-    const loader = new Loader({
-      apiKey: apiKey,
-      version: 'weekly',
-      libraries: ['places'],
-    });
+    let cancelled = false;
 
-    // @ts-expect-error - Loader.load() exists but types may not be up to date
-    loader.load().then(() => {
-      if (mapRef.current) {
-        // Default location (India center) or use provided value
-        const initialCenter = value 
-          ? { lat: value.latitude, lng: value.longitude }
-          : { lat: 20.5937, lng: 78.9629 }; // Center of India
+    loadGoogleMaps(apiKey).then(() => {
+      if (cancelled || !mapRef.current) return;
 
-        const mapInstance = new google.maps.Map(mapRef.current, {
-          center: initialCenter,
-          zoom: value ? 15 : 5,
-          mapTypeControl: true,
-          streetViewControl: false,
-          fullscreenControl: true,
-        });
+      const initialCenter = value
+        ? { lat: value.latitude, lng: value.longitude }
+        : { lat: 20.5937, lng: 78.9629 }; // Center of India
 
-        setMap(mapInstance);
+      const mapInstance = new google.maps.Map(mapRef.current, {
+        center: initialCenter,
+        zoom: value ? 15 : 5,
+        mapTypeControl: true,
+        streetViewControl: false,
+        fullscreenControl: true,
+        mapId: 'DEMO_MAP_ID', // Required for AdvancedMarkerElement
+      });
 
-        // Add marker
-        const markerInstance = new google.maps.Marker({
-          map: mapInstance,
-          position: initialCenter,
-          draggable: true,
-          title: 'Property Location',
-        });
+      setMap(mapInstance);
 
-        setMarker(markerInstance);
+      // AdvancedMarkerElement — replaces deprecated google.maps.Marker
+      const markerInstance = new google.maps.marker.AdvancedMarkerElement({
+        map: mapInstance,
+        position: initialCenter,
+        gmpDraggable: true,
+        title: 'Property Location',
+      });
 
-        // Handle marker drag
-        markerInstance.addListener('dragend', () => {
-          const position = markerInstance.getPosition();
-          if (position) {
-            reverseGeocode(position.lat(), position.lng());
-          }
-        });
+      setMarker(markerInstance);
 
-        // Handle map click
-        mapInstance.addListener('click', (e: google.maps.MapMouseEvent) => {
-          if (e.latLng) {
-            markerInstance.setPosition(e.latLng);
-            reverseGeocode(e.latLng.lat(), e.latLng.lng());
-          }
-        });
-
-        // Initialize Places Autocomplete
-        if (searchInputRef.current) {
-          const autocompleteInstance = new google.maps.places.Autocomplete(
-            searchInputRef.current,
-            {
-              componentRestrictions: { country: 'in' }, // Restrict to India
-              fields: ['address_components', 'geometry', 'formatted_address'],
-            }
-          );
-
-          autocompleteInstance.addListener('place_changed', () => {
-            const place = autocompleteInstance.getPlace();
-            if (place.geometry?.location) {
-              const location = place.geometry.location;
-              mapInstance.setCenter(location);
-              mapInstance.setZoom(15);
-              markerInstance.setPosition(location);
-              
-              const addressComponents = place.address_components || [];
-              const city = extractAddressComponent(addressComponents, 'locality') || 
-                          extractAddressComponent(addressComponents, 'administrative_area_level_2');
-              const state = extractAddressComponent(addressComponents, 'administrative_area_level_1');
-
-              const locationData: LocationData = {
-                address: place.formatted_address || '',
-                latitude: location.lat(),
-                longitude: location.lng(),
-                city: city || '',
-                state: state || '',
-              };
-
-              setCurrentLocation(locationData);
-              onChange(locationData);
-            }
-          });
-
-          setAutocomplete(autocompleteInstance);
+      markerInstance.addListener('dragend', () => {
+        const pos = markerInstance.position;
+        if (pos instanceof google.maps.LatLng) {
+          reverseGeocode(pos.lat(), pos.lng());
         }
+      });
 
-        setIsLoading(false);
+      mapInstance.addListener('click', (e: google.maps.MapMouseEvent) => {
+        if (e.latLng) {
+          markerInstance.position = e.latLng;
+          reverseGeocode(e.latLng.lat(), e.latLng.lng());
+        }
+      });
+
+      // Legacy Autocomplete — uses Places API (already enabled)
+      // PlaceAutocompleteElement requires "Places API (New)" which needs separate GCP enablement
+      if (searchInputRef.current) {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
+        const autocompleteInstance = new google.maps.places.Autocomplete(
+          searchInputRef.current,
+          {
+            componentRestrictions: { country: 'in' },
+            fields: ['address_components', 'geometry', 'formatted_address'],
+          }
+        );
+
+        autocompleteInstance.addListener('place_changed', () => {
+          const place = autocompleteInstance.getPlace();
+          if (place.geometry?.location) {
+            const location = place.geometry.location;
+            mapInstance.setCenter(location);
+            mapInstance.setZoom(15);
+            markerInstance.position = location;
+
+            const addressComponents = place.address_components || [];
+            const city =
+              extractAddressComponent(addressComponents, 'locality') ||
+              extractAddressComponent(addressComponents, 'administrative_area_level_2');
+            const state = extractAddressComponent(addressComponents, 'administrative_area_level_1');
+
+            const locationData: LocationData = {
+              address: place.formatted_address || '',
+              latitude: location.lat(),
+              longitude: location.lng(),
+              city: city || '',
+              state: state || '',
+            };
+
+            setCurrentLocation(locationData);
+            onChange(locationData);
+          }
+        });
       }
+
+      setIsLoading(false);
     }).catch((error) => {
+      if (cancelled) return;
       console.error('Error loading Google Maps:', error);
       toast({
         title: 'Failed to Load Map',
@@ -151,18 +165,19 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       });
       setIsLoading(false);
     });
+
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
   // Reverse geocode coordinates to address
+  // NOTE: requires "Geocoding API" enabled in Google Cloud Console
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
-    if (!map) return;
-
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === 'OK' && results && results[0]) {
+      if (status === 'OK' && results?.[0]) {
         const addressComponents = results[0].address_components;
-        const city = extractAddressComponent(addressComponents, 'locality') || 
+        const city = extractAddressComponent(addressComponents, 'locality') ||
                     extractAddressComponent(addressComponents, 'administrative_area_level_2');
         const state = extractAddressComponent(addressComponents, 'administrative_area_level_1');
 
@@ -176,10 +191,15 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
 
         setCurrentLocation(locationData);
         onChange(locationData);
-
-        if (searchInputRef.current) {
-          searchInputRef.current.value = results[0].formatted_address;
-        }
+      } else if (status === 'REQUEST_DENIED') {
+        // Geocoding API not enabled — fall back to raw coordinates
+        const locationData: LocationData = {
+          address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+          latitude: lat,
+          longitude: lng,
+        };
+        setCurrentLocation(locationData);
+        onChange(locationData);
       } else {
         toast({
           title: 'Geocoding Failed',
@@ -188,15 +208,14 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
         });
       }
     });
-  }, [map, onChange, toast]);
+  }, [onChange, toast]);
 
-  // Extract specific component from address
+  // Extract component from Geocoder/Autocomplete address results
   const extractAddressComponent = (
     components: google.maps.GeocoderAddressComponent[],
     type: string
   ): string | undefined => {
-    const component = components.find((c) => c.types.includes(type));
-    return component?.long_name;
+    return components.find((c) => c.types.includes(type))?.long_name;
   };
 
   // Get current location
@@ -220,7 +239,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
           const location = { lat: latitude, lng: longitude };
           map.setCenter(location);
           map.setZoom(15);
-          marker.setPosition(location);
+          marker.position = location;
           reverseGeocode(latitude, longitude);
         }
         
@@ -243,24 +262,11 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     );
   };
 
-  if (isLoading) {
-    return (
-      <Card className={className}>
-        <div className="flex items-center justify-center h-[400px] bg-muted">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-            <p className="text-sm text-muted-foreground">Loading map...</p>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
   return (
     <div className={className}>
       <div className="space-y-3">
-        {/* Search and Current Location Button */}
-        <div className="flex gap-2">
+        {/* Search + Current Location Button — hidden while loading */}
+        <div className={`flex gap-2${isLoading ? ' invisible' : ''}`}>
           <div className="relative flex-1">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -285,13 +291,23 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
           </Button>
         </div>
 
-        {/* Map Container */}
+        {/* Map Container — always in DOM so mapRef is available before load completes */}
         <Card>
-          <div 
-            ref={mapRef} 
-            className="w-full h-[400px] rounded-lg"
-            style={{ minHeight: '400px' }}
-          />
+          <div className="relative w-full h-[400px] rounded-lg" style={{ minHeight: '400px' }}>
+            {/* Loading overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg z-10">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">Loading map...</p>
+                </div>
+              </div>
+            )}
+            <div
+              ref={mapRef}
+              className="w-full h-full rounded-lg"
+            />
+          </div>
         </Card>
 
         {/* Selected Location Info */}
