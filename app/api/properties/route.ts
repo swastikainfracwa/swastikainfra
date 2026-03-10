@@ -236,7 +236,6 @@ export async function POST(request: NextRequest) {
         owner_id: session.user.id,
         owner_name: session.user.name || '',
         owner_phone: isStaffCreated ? (session.user as any).phone : ownerContactNumber,
-        created_by: session.user.id,
         verification_status: verificationStatus,
         verification_badge: verificationBadge,
         is_staff_created: isStaffCreated,
