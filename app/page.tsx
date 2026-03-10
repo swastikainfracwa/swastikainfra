@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, Shield, BadgeCheck, TrendingUp, MapPin, Navigation, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import SearchBar from '@/components/SearchBar';
 import PropertyCard from '@/components/PropertyCard';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Property } from '@/types';
 
 export default function HomePage() {
@@ -19,6 +21,8 @@ export default function HomePage() {
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [locationPermission, setLocationPermission] = useState<'prompt' | 'granted' | 'denied' | 'dismissed'>('prompt');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -144,6 +148,29 @@ export default function HomePage() {
 
   return (
     <main className="flex-1">
+      {/* Mobile Auth Buttons - Only visible on mobile when not authenticated */}
+      {!isAuthenticated && (
+        <section className="md:hidden bg-gradient-to-br from-primary/5 via-background to-success/5 pt-6 pb-4">
+          <div className="container">
+            <div className="flex gap-3 max-w-md mx-auto">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => router.push('/login')}
+              >
+                Login
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => router.push('/signup')}
+              >
+                List Property
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary/5 via-background to-success/5 py-16 md:py-24">
         <div className="container">

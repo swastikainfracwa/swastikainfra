@@ -183,58 +183,40 @@ export default function Header() {
                 </Link>
               );
             })}
-            <div className="pt-4 border-t space-y-2">
-              {isAuthenticated ? (
-                <>
-                  <div className="flex items-center gap-3 px-3 py-2">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={undefined} alt={user?.name} />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {user?.name ? getUserInitials(user.name) : 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <p className="text-sm font-medium">{user?.name}</p>
-                      <p className="text-xs text-muted-foreground">{user?.email}</p>
-                    </div>
+            {isAuthenticated && (
+              <div className="pt-4 border-t space-y-2">
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={undefined} alt={user?.name} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {user?.name ? getUserInitials(user.name) : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <p className="text-sm font-medium">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
-                  {!isStaff && (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start gap-2"
-                      onClick={() => { router.push(getDashboardRoute()); setIsMobileMenuOpen(false); }}
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      Dashboard
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-destructive"
-                    onClick={() => { logout(); setIsMobileMenuOpen(false); }}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </Button>
-                </>
-              ) : (
-                <>
+                </div>
+                {!isStaff && (
                   <Button
                     variant="outline"
-                    className="w-full"
-                    onClick={() => { router.push('/login'); setIsMobileMenuOpen(false); }}
+                    className="w-full justify-start gap-2"
+                    onClick={() => { router.push(getDashboardRoute()); setIsMobileMenuOpen(false); }}
                   >
-                    Login
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
                   </Button>
-                  <Button
-                    className="w-full"
-                    onClick={() => { router.push('/signup'); setIsMobileMenuOpen(false); }}
-                  >
-                    List Property
-                  </Button>
-                </>
-              )}
-            </div>
+                )}
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 text-destructive"
+                  onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
+            )}
           </nav>
         </div>
       )}
