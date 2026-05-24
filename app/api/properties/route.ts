@@ -96,11 +96,6 @@ export async function GET(request: NextRequest) {
 
     // Transform database response to match Property interface (snake_case to camelCase)
     const transformedProperties = (properties || []).map((prop: any) => {
-      // Debug: Log images data
-      if (prop.images) {
-        console.log(`Property ${prop.id} images:`, prop.images, typeof prop.images);
-      }
-      
       return {
         id: prop.id,
         title: prop.title,

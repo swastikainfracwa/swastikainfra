@@ -21,14 +21,17 @@ export default function AboutPage() {
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <div className="flex justify-center mb-8">
-              <Image
-                src="/About%20logo.png"
-                alt="Swastika Infrastructures"
-                width={300}
-                height={300}
-                className="h-40 w-40 md:h-64 md:w-64 object-contain rounded-full border-4 border-primary shadow-lg"
-                priority
-              />
+              <div className="rounded-full bg-background p-2 shadow-lg">
+                <div className="relative h-40 w-40 overflow-hidden rounded-full md:h-64 md:w-64">
+                  <Image
+                    src="/About%20logo.png"
+                    alt="Swastika Infrastructures"
+                    fill
+                    className="object-cover object-[center_40%]"
+                    priority
+                  />
+                </div>
+              </div>
             </div>
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">About Swastika Infrastructures</h1>
             <p className="text-lg text-muted-foreground">
@@ -69,7 +72,7 @@ export default function AboutPage() {
         <div className="container">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Meet Our Founder</h2>
+              <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Founder</h2>
               <p className="text-lg text-muted-foreground">
                 Visionary leadership driving innovation in real estate
               </p>
