@@ -123,15 +123,48 @@ export async function DELETE(
 
     const supabase = await createAdminClient();
 
+    // Ensure the profile exists before attempting deletion.
+    const { data: existingProfile, error: profileFetchError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .single();
+
+    if (profileFetchError || !existingProfile) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
     // Delete auth user (will cascade to profile due to ON DELETE CASCADE)
     const { error: authError } = await supabase.auth.admin.deleteUser(userId);
 
     if (authError) {
-      console.error('Error deleting auth user:', authError);
-      return NextResponse.json(
-        { error: 'Failed to delete user' },
-        { status: 500 }
-      );
+      const authErrorMessage = authError.message?.toLowerCase() || '';
+      const isAuthUserMissing = authErrorMessage.includes('user not found');
+
+      // Some records are profile-only users and don't exist in auth.users.
+      if (!isAuthUserMissing) {
+        console.error('Error deleting auth user:', authError);
+        return NextResponse.json(
+          { error: 'Failed to delete user' },
+          { status: 500 }
+        );
+      }
+
+      const { error: profileDeleteError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileDeleteError) {
+        console.error('Error deleting profile-only user:', profileDeleteError);
+        return NextResponse.json(
+          { error: 'Failed to delete user' },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({
