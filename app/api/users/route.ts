@@ -230,12 +230,6 @@ export async function POST(request: NextRequest) {
         });
       } catch (emailError: any) {
         console.error('Error sending credentials email:', emailError);
-        await supabase.from('profiles').delete().eq('id', authData.user.id);
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        return NextResponse.json(
-          { error: 'User created but credentials email could not be sent', details: emailError.message },
-          { status: 500 }
-        );
       }
 
     console.log('User created successfully with profile:', {
@@ -248,6 +242,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: 'User created successfully',
+      email_notice: 'Credentials email was attempted. If email is not configured, check server logs for the preview.',
       user: {
         id: profile.id,
         name: profile.name,

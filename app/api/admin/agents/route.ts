@@ -188,14 +188,13 @@ export async function POST(request: NextRequest) {
       });
     } catch (emailError: any) {
       console.error('Error sending credentials email:', emailError);
-      await adminClient.from('profiles').delete().eq('id', staff.id);
-      return NextResponse.json(
-        { error: 'Staff account created but credentials email could not be sent', details: emailError.message },
-        { status: 500 }
-      );
     }
 
-    return NextResponse.json({ staff, agent: staff }, { status: 201 });
+    return NextResponse.json({
+      staff,
+      agent: staff,
+      email_notice: 'Credentials email was attempted. If email is not configured, check server logs for the preview.',
+    }, { status: 201 });
   } catch (error: any) {
     console.error('Staff creation error:', error);
     return NextResponse.json(

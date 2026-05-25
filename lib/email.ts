@@ -7,6 +7,8 @@ type CredentialsEmailInput = {
   loginUrl?: string;
 };
 
+import nodemailer from 'nodemailer';
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')
@@ -74,10 +76,36 @@ function buildCredentialsEmailHtml({ name, username, password, role, loginUrl }:
 }
 
 export async function sendCredentialsEmail(input: CredentialsEmailInput) {
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = process.env.SMTP_PORT;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPassword = process.env.SMTP_PASSWORD;
+  const smtpFrom = process.env.SMTP_FROM || smtpUser;
   const fromEmail = process.env.RESEND_FROM_EMAIL;
   const apiKey = process.env.RESEND_API_KEY;
   const subject = `Your ${getRoleLabel(input.role)} account credentials`;
   const html = buildCredentialsEmailHtml(input);
+
+  if (smtpHost && smtpPort && smtpUser && smtpPassword && smtpFrom) {
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: parseInt(smtpPort, 10),
+      secure: parseInt(smtpPort, 10) === 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPassword,
+      },
+    });
+
+    const info = await transporter.sendMail({
+      from: smtpFrom,
+      to: input.to,
+      subject,
+      html,
+    });
+
+    return Boolean(info.messageId);
+  }
 
   if (apiKey && fromEmail) {
     const response = await fetch('https://api.resend.com/emails', {
@@ -99,17 +127,13 @@ export async function sendCredentialsEmail(input: CredentialsEmailInput) {
       throw new Error(`Failed to send credentials email: ${response.status} ${errorText}`);
     }
 
-    return;
+    return true;
   }
 
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('Email service is not configured. Credentials email preview:', {
-      to: input.to,
-      subject,
-      html,
-    });
-    return;
-  }
-
-  throw new Error('Email service is not configured');
+  console.warn('Email service is not configured. Credentials email preview:', {
+    to: input.to,
+    subject,
+    html,
+  });
+  return false;
 }
