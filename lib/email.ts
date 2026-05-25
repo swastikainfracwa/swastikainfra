@@ -26,6 +26,37 @@ function getRoleLabel(role: string) {
   return role.charAt(0).toUpperCase() + role.slice(1);
 }
 
+function createGmailTransport() {
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpPort = process.env.SMTP_PORT || '587';
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPassword = process.env.SMTP_PASSWORD;
+  const smtpFrom = process.env.SMTP_FROM || smtpUser;
+
+  if (!smtpUser || !smtpPassword || !smtpFrom) {
+    throw new Error('Gmail SMTP is not configured. Set SMTP_USER, SMTP_PASSWORD, and SMTP_FROM.');
+  }
+
+  const portNumber = Number.parseInt(smtpPort, 10);
+
+  if (Number.isNaN(portNumber)) {
+    throw new Error('SMTP_PORT must be a valid number.');
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: portNumber,
+    secure: portNumber === 465,
+    requireTLS: portNumber === 587,
+    auth: {
+      user: smtpUser,
+      pass: smtpPassword,
+    },
+  });
+
+  return { transporter, smtpFrom };
+}
+
 function buildCredentialsEmailHtml({ name, username, password, role, loginUrl }: CredentialsEmailInput) {
   const safeName = escapeHtml(name);
   const safeUsername = escapeHtml(username);
@@ -76,39 +107,17 @@ function buildCredentialsEmailHtml({ name, username, password, role, loginUrl }:
 }
 
 export async function sendCredentialsEmail(input: CredentialsEmailInput) {
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = process.env.SMTP_PORT;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPassword = process.env.SMTP_PASSWORD;
-  const smtpFrom = process.env.SMTP_FROM || smtpUser;
   const subject = `Your ${getRoleLabel(input.role)} account credentials`;
   const html = buildCredentialsEmailHtml(input);
 
-  if (smtpHost && smtpPort && smtpUser && smtpPassword && smtpFrom) {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: parseInt(smtpPort, 10),
-      secure: parseInt(smtpPort, 10) === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPassword,
-      },
-    });
+  const { transporter, smtpFrom } = createGmailTransport();
 
-    const info = await transporter.sendMail({
-      from: smtpFrom,
-      to: input.to,
-      subject,
-      html,
-    });
-
-    return Boolean(info.messageId);
-  }
-
-  console.warn('Email service is not configured. Credentials email preview:', {
+  const info = await transporter.sendMail({
+    from: smtpFrom,
     to: input.to,
     subject,
     html,
   });
-  return false;
+
+  return Boolean(info.messageId);
 }
