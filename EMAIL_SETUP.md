@@ -5,7 +5,7 @@ The password reset feature is currently in **development mode**. Reset links are
 
 ## How to Set Up Email in Production
 
-The credential email helper prefers Resend when `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are set. SMTP is kept only as a legacy fallback.
+The credential email helper sends through Gmail SMTP using `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`.
 
 ### Option 1: SendGrid (Recommended)
 
@@ -33,42 +33,7 @@ The credential email helper prefers Resend when `RESEND_API_KEY` and `RESEND_FRO
 5. **Update the Code**
    In `app/api/auth/reset-password/route.ts`, uncomment the SendGrid code (lines 60-80)
 
-### Option 2: Resend (Modern Alternative)
-
-1. **Sign up for Resend**
-   - Go to https://resend.com/
-   - Create account (3,000 emails/month free)
-
-2. **Get your API Key**
-   - Create API key in dashboard
-
-3. **Configure Environment Variables**
-   ```
-   RESEND_API_KEY=your_resend_api_key
-   RESEND_FROM_EMAIL=noreply@yourdomain.com
-   ```
-
-4. **Install Resend Package**
-   ```bash
-   npm install resend
-   ```
-
-5. **Update the Code**
-   ```typescript
-   import { Resend } from 'resend';
-   const resend = new Resend(process.env.RESEND_API_KEY);
-   
-   await resend.emails.send({
-     from: process.env.RESEND_FROM_EMAIL!,
-     to: email,
-     subject: 'Reset Your Password',
-     html: emailTemplate
-   });
-   ```
-
-### Option 3: Nodemailer (SMTP)
-
-Use this only if you are not using Resend yet.
+### Option 2: Nodemailer (SMTP)
 
 For using your own SMTP server or Gmail:
 
@@ -113,9 +78,9 @@ For using your own SMTP server or Gmail:
 After configuring email:
 
 1. Set `NODE_ENV=production` in your environment
-2. Test password reset flow
+2. Test the credential email flow
 3. Check spam folder if email doesn't arrive
-4. Monitor email service dashboard for delivery status
+4. Monitor Gmail delivery and app-password settings
 
 ## Security Considerations
 

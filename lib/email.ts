@@ -81,41 +81,8 @@ export async function sendCredentialsEmail(input: CredentialsEmailInput) {
   const smtpUser = process.env.SMTP_USER;
   const smtpPassword = process.env.SMTP_PASSWORD;
   const smtpFrom = process.env.SMTP_FROM || smtpUser;
-  const fromEmail = process.env.RESEND_FROM_EMAIL;
-  const apiKey = process.env.RESEND_API_KEY;
   const subject = `Your ${getRoleLabel(input.role)} account credentials`;
   const html = buildCredentialsEmailHtml(input);
-
-  const sendViaResend = async () => {
-    if (!apiKey || !fromEmail) {
-      return false;
-    }
-
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: input.to,
-        subject,
-        html,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to send credentials email: ${response.status} ${errorText}`);
-    }
-
-    return true;
-  };
-
-  if (apiKey && fromEmail) {
-    return sendViaResend();
-  }
 
   if (smtpHost && smtpPort && smtpUser && smtpPassword && smtpFrom) {
     try {
@@ -138,16 +105,6 @@ export async function sendCredentialsEmail(input: CredentialsEmailInput) {
 
       return Boolean(info.messageId);
     } catch (error: any) {
-      const isAuthFailure =
-        error?.code === 'EAUTH' ||
-        error?.responseCode === 535 ||
-        /Invalid login|Username and Password not accepted/i.test(error?.message || '');
-
-      if (isAuthFailure && apiKey && fromEmail) {
-        console.warn('SMTP authentication failed, falling back to Resend:', error?.message || error);
-        return sendViaResend();
-      }
-
       throw error;
     }
   }
