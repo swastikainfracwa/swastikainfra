@@ -123,7 +123,6 @@ export async function DELETE(
 
     const supabase = await createAdminClient();
 
-    // Ensure the profile exists before attempting deletion.
     const { data: existingProfile, error: profileFetchError } = await supabase
       .from('profiles')
       .select('id')
@@ -137,7 +136,8 @@ export async function DELETE(
       );
     }
 
-    // Delete auth user (will cascade to profile due to ON DELETE CASCADE)
+    // Delete the auth user first, then remove the profile explicitly because
+    // the profiles table no longer has an ON DELETE CASCADE foreign key.
     const { error: authError } = await supabase.auth.admin.deleteUser(userId);
 
     if (authError) {
@@ -152,19 +152,19 @@ export async function DELETE(
           { status: 500 }
         );
       }
+    }
 
-      const { error: profileDeleteError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+    const { error: profileDeleteError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
 
-      if (profileDeleteError) {
-        console.error('Error deleting profile-only user:', profileDeleteError);
-        return NextResponse.json(
-          { error: 'Failed to delete user' },
-          { status: 500 }
-        );
-      }
+    if (profileDeleteError) {
+      console.error('Error deleting profile user:', profileDeleteError);
+      return NextResponse.json(
+        { error: 'Failed to delete user' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({

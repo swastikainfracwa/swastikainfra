@@ -117,7 +117,6 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       // Legacy Autocomplete — uses Places API (already enabled)
       // PlaceAutocompleteElement requires "Places API (New)" which needs separate GCP enablement
       if (searchInputRef.current) {
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         const autocompleteInstance = new google.maps.places.Autocomplete(
           searchInputRef.current,
           {

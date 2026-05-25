@@ -85,28 +85,24 @@ export async function sendCredentialsEmail(input: CredentialsEmailInput) {
   const html = buildCredentialsEmailHtml(input);
 
   if (smtpHost && smtpPort && smtpUser && smtpPassword && smtpFrom) {
-    try {
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: parseInt(smtpPort, 10),
-        secure: parseInt(smtpPort, 10) === 465,
-        auth: {
-          user: smtpUser,
-          pass: smtpPassword,
-        },
-      });
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: parseInt(smtpPort, 10),
+      secure: parseInt(smtpPort, 10) === 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPassword,
+      },
+    });
 
-      const info = await transporter.sendMail({
-        from: smtpFrom,
-        to: input.to,
-        subject,
-        html,
-      });
+    const info = await transporter.sendMail({
+      from: smtpFrom,
+      to: input.to,
+      subject,
+      html,
+    });
 
-      return Boolean(info.messageId);
-    } catch (error: any) {
-      throw error;
-    }
+    return Boolean(info.messageId);
   }
 
   console.warn('Email service is not configured. Credentials email preview:', {
