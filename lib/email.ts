@@ -86,28 +86,11 @@ export async function sendCredentialsEmail(input: CredentialsEmailInput) {
   const subject = `Your ${getRoleLabel(input.role)} account credentials`;
   const html = buildCredentialsEmailHtml(input);
 
-  if (smtpHost && smtpPort && smtpUser && smtpPassword && smtpFrom) {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: parseInt(smtpPort, 10),
-      secure: parseInt(smtpPort, 10) === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPassword,
-      },
-    });
+  const sendViaResend = async () => {
+    if (!apiKey || !fromEmail) {
+      return false;
+    }
 
-    const info = await transporter.sendMail({
-      from: smtpFrom,
-      to: input.to,
-      subject,
-      html,
-    });
-
-    return Boolean(info.messageId);
-  }
-
-  if (apiKey && fromEmail) {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -128,6 +111,45 @@ export async function sendCredentialsEmail(input: CredentialsEmailInput) {
     }
 
     return true;
+  };
+
+  if (smtpHost && smtpPort && smtpUser && smtpPassword && smtpFrom) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: parseInt(smtpPort, 10),
+        secure: parseInt(smtpPort, 10) === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPassword,
+        },
+      });
+
+      const info = await transporter.sendMail({
+        from: smtpFrom,
+        to: input.to,
+        subject,
+        html,
+      });
+
+      return Boolean(info.messageId);
+    } catch (error: any) {
+      const isAuthFailure =
+        error?.code === 'EAUTH' ||
+        error?.responseCode === 535 ||
+        /Invalid login|Username and Password not accepted/i.test(error?.message || '');
+
+      if (isAuthFailure && apiKey && fromEmail) {
+        console.warn('SMTP authentication failed, falling back to Resend:', error?.message || error);
+        return sendViaResend();
+      }
+
+      throw error;
+    }
+  }
+
+  if (apiKey && fromEmail) {
+    return sendViaResend();
   }
 
   console.warn('Email service is not configured. Credentials email preview:', {
