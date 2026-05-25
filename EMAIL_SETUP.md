@@ -5,6 +5,8 @@ The password reset feature is currently in **development mode**. Reset links are
 
 ## How to Set Up Email in Production
 
+The credential email helper prefers Resend when `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are set. SMTP is kept only as a legacy fallback.
+
 ### Option 1: SendGrid (Recommended)
 
 1. **Sign up for SendGrid**
@@ -65,6 +67,8 @@ The password reset feature is currently in **development mode**. Reset links are
    ```
 
 ### Option 3: Nodemailer (SMTP)
+
+Use this only if you are not using Resend yet.
 
 For using your own SMTP server or Gmail:
 

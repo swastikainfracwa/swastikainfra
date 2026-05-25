@@ -113,6 +113,10 @@ export async function sendCredentialsEmail(input: CredentialsEmailInput) {
     return true;
   };
 
+  if (apiKey && fromEmail) {
+    return sendViaResend();
+  }
+
   if (smtpHost && smtpPort && smtpUser && smtpPassword && smtpFrom) {
     try {
       const transporter = nodemailer.createTransport({
@@ -146,10 +150,6 @@ export async function sendCredentialsEmail(input: CredentialsEmailInput) {
 
       throw error;
     }
-  }
-
-  if (apiKey && fromEmail) {
-    return sendViaResend();
   }
 
   console.warn('Email service is not configured. Credentials email preview:', {
