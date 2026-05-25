@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/server';
+import { sendCredentialsEmail } from '@/lib/email';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 
@@ -170,6 +171,26 @@ export async function POST(request: NextRequest) {
       console.error('Error creating staff:', createError);
       return NextResponse.json(
         { error: `Failed to create ${role} account` },
+        { status: 500 }
+      );
+    }
+
+    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`;
+
+    try {
+      await sendCredentialsEmail({
+        to: email,
+        name,
+        username: name,
+        password,
+        role,
+        loginUrl,
+      });
+    } catch (emailError: any) {
+      console.error('Error sending credentials email:', emailError);
+      await adminClient.from('profiles').delete().eq('id', staff.id);
+      return NextResponse.json(
+        { error: 'Staff account created but credentials email could not be sent', details: emailError.message },
         { status: 500 }
       );
     }

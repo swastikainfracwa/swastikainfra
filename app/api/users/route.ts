@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/server';
+import { sendCredentialsEmail } from '@/lib/email';
 import bcrypt from 'bcryptjs';
 
 export async function GET(request: NextRequest) {
@@ -215,6 +216,27 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+      const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`;
+
+      try {
+        await sendCredentialsEmail({
+          to: email,
+          name,
+          username: name,
+          password,
+          role,
+          loginUrl,
+        });
+      } catch (emailError: any) {
+        console.error('Error sending credentials email:', emailError);
+        await supabase.from('profiles').delete().eq('id', authData.user.id);
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        return NextResponse.json(
+          { error: 'User created but credentials email could not be sent', details: emailError.message },
+          { status: 500 }
+        );
+      }
 
     console.log('User created successfully with profile:', {
       id: profile.id,

@@ -104,7 +104,7 @@ export default function AboutPage() {
               </div>
               
               <div className="order-1 md:order-2">
-                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl">
+                <div className="relative mx-auto aspect-[3/4] w-full max-w-[280px] overflow-hidden rounded-2xl shadow-2xl sm:max-w-sm md:max-w-none">
                   <Image
                     src="/About.png"
                     alt="Santosh Vishwakarma - Founder & CEO"
