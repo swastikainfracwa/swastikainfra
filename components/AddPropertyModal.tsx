@@ -712,7 +712,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
               Property Images {isOwner && !propertyToEdit && <span className="text-destructive">*</span>}
             </FormLabel>
             <FormDescription>
-              Upload up to 10 images of your property. Images should be clear and show different angles of the property.
+              Upload up to 10 images of your property. Recommended size: landscape photos at 1600 x 1200 px or larger, in JPG, PNG, or WebP format.
             </FormDescription>
             
             {/* Existing Images (Edit Mode) */}
@@ -721,12 +721,12 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                 <p className="text-sm text-muted-foreground">Existing Images:</p>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {propertyToEdit.images.map((imageUrl: string, index: number) => (
-                    <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
+                    <div key={`existing-${index}`} className="relative aspect-video rounded-lg overflow-hidden border bg-muted/40">
                       <Image
                         src={imageUrl}
                         alt={`Existing ${index + 1}`}
                         fill
-                        className="object-cover"
+                        className="object-contain object-center"
                       />
                     </div>
                   ))}
@@ -740,12 +740,12 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
                 {propertyToEdit && <p className="text-sm text-muted-foreground">New Images to Add:</p>}
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
+                    <div key={index} className="relative aspect-video rounded-lg overflow-hidden border bg-muted/40">
                       <Image
                         src={preview}
                         alt={`Preview ${index + 1}`}
                         fill
-                        className="object-cover"
+                        className="object-contain object-center"
                       />
                       <button
                         type="button"

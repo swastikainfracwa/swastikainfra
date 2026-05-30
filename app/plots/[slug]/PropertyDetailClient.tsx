@@ -132,11 +132,11 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
           <div className="lg:col-span-2 space-y-6">
             {/* Image Gallery */}
             <Card className="overflow-hidden">
-              <div className="relative aspect-[16/10]">
+              <div className="relative aspect-[16/10] overflow-hidden bg-muted/40">
                 <img
                   src={property.images[currentImageIndex]}
                   alt={`${property.title} - Image ${currentImageIndex + 1}`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain object-center"
                 />
                 
                 {property.images.length > 1 && (
@@ -196,12 +196,12 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                     <button
                       key={index}
                       className={cn(
-                        'flex-shrink-0 w-20 h-16 rounded-lg border-2 overflow-hidden transition-colors',
+                          'flex-shrink-0 w-20 h-16 rounded-lg border-2 overflow-hidden transition-colors bg-muted/40',
                         index === currentImageIndex ? 'border-primary' : 'border-transparent'
                       )}
                       onClick={() => setCurrentImageIndex(index)}
                     >
-                      <img src={img} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                        <img src={img} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-contain object-center" />
                     </button>
                   ))}
                 </div>
