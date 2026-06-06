@@ -193,6 +193,8 @@ export default function ManagerDashboardPage() {
 
     try {
       setProcessing(true);
+
+      const assignedAgentId = selectedAgentId === 'unassign' ? null : selectedAgentId;
       
       const response = await fetch(`/api/properties/${selectedProperty.id}`, {
         method: 'PATCH',
@@ -200,7 +202,7 @@ export default function ManagerDashboardPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          assignedAgentId: selectedAgentId,
+          assignedAgentId,
           verificationStatus: 'assigned',
         }),
       });
@@ -279,6 +281,7 @@ export default function ManagerDashboardPage() {
 
   const openAssignModal = (property: Property) => {
     setSelectedProperty(property);
+    setSelectedAgentId(property.assignedAgentId || '');
     setAssignModalOpen(true);
   };
 
@@ -579,7 +582,16 @@ export default function ManagerDashboardPage() {
       </Tabs>
 
       {/* Assign Agent Modal */}
-      <Dialog open={assignModalOpen} onOpenChange={setAssignModalOpen}>
+      <Dialog
+        open={assignModalOpen}
+        onOpenChange={(open) => {
+          setAssignModalOpen(open);
+          if (!open) {
+            setSelectedProperty(null);
+            setSelectedAgentId('');
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign Agent</DialogTitle>
@@ -599,6 +611,7 @@ export default function ManagerDashboardPage() {
                   <SelectValue placeholder="Choose an agent" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="unassign">Unassign</SelectItem>
                   {agents.map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       {agent.name} - {agent.email}
