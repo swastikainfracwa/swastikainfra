@@ -29,6 +29,7 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
   const [hasSubmittedLead, setHasSubmittedLead] = useState(false);
   const [isContentUnlocked, setIsContentUnlocked] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
@@ -40,6 +41,11 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
       setHasSubmittedLead(true);
     }
   }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`swastika-property-saved-${property.id}`);
+    setIsSaved(saved === 'true');
+  }, [property.id]);
 
   // Handle successful lead submission - unlock ALL properties globally
   const handleLeadSuccess = () => {
@@ -91,6 +97,47 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
       // User is not logged in or doesn't have phone number, show modal
       setIsLeadModalOpen(true);
     }
+  };
+
+  const handleShareClick = async () => {
+    const shareUrl = typeof window !== 'undefined'
+      ? window.location.href
+      : `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/plots/${property.seoSlug}`;
+    const shareData = {
+      title: property.title,
+      text: `${property.title} - ${formatPrice(property.price)} in ${property.city}`,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Link copied',
+        description: 'Property link copied to clipboard.',
+      });
+    } catch (error) {
+      console.error('Share error:', error);
+      toast({
+        title: 'Share failed',
+        description: 'Could not share the property link right now.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleFavoriteClick = () => {
+    const nextValue = !isSaved;
+    setIsSaved(nextValue);
+    localStorage.setItem(`swastika-property-saved-${property.id}`, String(nextValue));
+    toast({
+      title: nextValue ? 'Saved' : 'Removed',
+      description: nextValue ? 'Property added to your favorites.' : 'Property removed from your favorites.',
+    });
   };
 
   // Extract YouTube video ID from various URL formats
@@ -335,10 +382,23 @@ export default function PropertyDetailClient({ property, propertyTypeColors }: P
                   </Button>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" size="icon" className="flex-1">
-                      <Heart className="h-4 w-4" />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="flex-1"
+                      onClick={handleFavoriteClick}
+                      aria-pressed={isSaved}
+                      title={isSaved ? 'Remove from favorites' : 'Save to favorites'}
+                    >
+                      <Heart className={`h-4 w-4 ${isSaved ? 'fill-current text-red-500' : ''}`} />
                     </Button>
-                    <Button variant="outline" size="icon" className="flex-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="flex-1"
+                      onClick={handleShareClick}
+                      title="Share property"
+                    >
                       <Share2 className="h-4 w-4" />
                     </Button>
                   </div>

@@ -902,6 +902,16 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
       <Drawer open={isOpen} onOpenChange={onClose}>
         <DrawerContent className="px-4 pb-6 max-h-[90vh] overflow-y-auto">
           <DrawerHeader className="px-0">
+            <div className="flex justify-center pb-3">
+              <Image
+                src="/Swastika%20logo.png"
+                alt="Swastika Infra"
+                width={72}
+                height={72}
+                className="h-14 w-14 rounded-xl object-contain"
+                priority
+              />
+            </div>
             <DrawerTitle className="font-display">
               {propertyToEdit 
                 ? 'Edit Property' 
@@ -929,6 +939,16 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
+          <div className="flex justify-center pb-3">
+            <Image
+              src="/Swastika%20logo.png"
+              alt="Swastika Infra"
+              width={72}
+              height={72}
+              className="h-14 w-14 rounded-xl object-contain"
+              priority
+            />
+          </div>
           <DialogTitle className="font-display">
             {propertyToEdit 
               ? 'Edit Property' 

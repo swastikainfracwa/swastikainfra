@@ -398,6 +398,14 @@ export default function AdminDashboardPage() {
 
   const handleAssignAgent = async () => {
     if (!propertyToAssign) return;
+    if (!selectedAgentId) {
+      toast({
+        title: 'Select an agent',
+        description: 'Choose an agent or unassign before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       setProcessing(true);
@@ -658,6 +666,7 @@ export default function AdminDashboardPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
+                                    type="button"
                                     onClick={() => {
                                       setPropertyToAssign(property);
                                       setSelectedAgentId(property.assignedAgentId || 'unassign');
@@ -671,6 +680,7 @@ export default function AdminDashboardPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
+                                    type="button"
                                     onClick={() => handleVerifyProperty(property.id)}
                                     title={property.verificationStatus === 'verified' ? 'Already Verified' : 'Verify Property'}
                                     disabled={processing || property.verificationStatus === 'verified'}
@@ -681,6 +691,7 @@ export default function AdminDashboardPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
+                                    type="button"
                                     onClick={() => {
                                       setPropertyToEdit(property);
                                       setAddPropertyModalOpen(true);
@@ -693,6 +704,7 @@ export default function AdminDashboardPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
+                                    type="button"
                                     onClick={() => router.push(`/plots/${property.seoSlug}`)}
                                     title="View Property"
                                   >
@@ -702,6 +714,7 @@ export default function AdminDashboardPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
+                                    type="button"
                                     onClick={() => {
                                       setPropertyToDelete(property);
                                       setPropertyDeleteConfirmOpen(true);
@@ -1312,10 +1325,10 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignAgentModalOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setAssignAgentModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAssignAgent} disabled={processing}>
+            <Button type="button" onClick={handleAssignAgent} disabled={processing}>
               {processing ? 'Assigning...' : 'Assign'}
             </Button>
           </DialogFooter>

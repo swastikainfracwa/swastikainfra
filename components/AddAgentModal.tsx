@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, User, UserCog, Eye, EyeOff } from 'lucide-react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -122,6 +123,16 @@ export const AddAgentModal: React.FC<AddAgentModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
+          <div className="flex justify-center pb-3">
+            <Image
+              src="/Swastika%20logo.png"
+              alt="Swastika Infra"
+              width={72}
+              height={72}
+              className="h-14 w-14 rounded-xl object-contain"
+              priority
+            />
+          </div>
           <DialogTitle className="flex items-center gap-2">
             {form.watch('role') === 'manager' ? (
               <UserCog className="h-5 w-5" />
