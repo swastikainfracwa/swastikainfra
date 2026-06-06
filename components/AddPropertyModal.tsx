@@ -904,7 +904,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
           <DrawerHeader className="px-0">
             <div className="flex justify-center pb-3">
               <Image
-                src="/Swastika%20logo.png"
+                src="/card%20logo.png"
                 alt="Swastika Infra"
                 width={72}
                 height={72}
@@ -941,7 +941,7 @@ export const AddPropertyModal: React.FC<AddPropertyModalProps> = ({
         <DialogHeader>
           <div className="flex justify-center pb-3">
             <Image
-              src="/Swastika%20logo.png"
+              src="/card%20logo.png"
               alt="Swastika Infra"
               width={72}
               height={72}

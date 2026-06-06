@@ -114,7 +114,7 @@ export const AddBusinessPartnerModal: React.FC<AddBusinessPartnerModalProps> = (
         <DialogHeader>
           <div className="flex justify-center pb-3">
             <Image
-              src="/Swastika%20logo.png"
+              src="/card%20logo.png"
               alt="Swastika Infra"
               width={72}
               height={72}
