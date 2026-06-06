@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { ActionDialogBrand } from '@/components/ActionDialogBrand';
 
 const businessPartnerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -112,16 +113,7 @@ export const AddBusinessPartnerModal: React.FC<AddBusinessPartnerModalProps> = (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <div className="flex justify-center pb-3">
-            <Image
-              src="/card%20logo.png"
-              alt="Swastika Infra"
-              width={72}
-              height={72}
-              className="h-14 w-14 rounded-xl object-contain"
-              priority
-            />
-          </div>
+          <ActionDialogBrand />
           <DialogTitle className="flex items-center gap-2">
             <Briefcase className="h-5 w-5" />
             Add Business Partner

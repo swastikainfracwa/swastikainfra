@@ -49,6 +49,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import DocumentList from '@/components/DocumentList';
 import { AddPropertyModal } from '@/components/AddPropertyModal';
+import { ActionDialogBrand } from '@/components/ActionDialogBrand';
 
 interface Property {
   id: string;
@@ -594,6 +595,7 @@ export default function ManagerDashboardPage() {
       >
         <DialogContent>
           <DialogHeader>
+            <ActionDialogBrand />
             <DialogTitle>Assign Agent</DialogTitle>
             <DialogDescription>
               Select an agent to handle this property verification
@@ -636,6 +638,7 @@ export default function ManagerDashboardPage() {
       <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
         <DialogContent>
           <DialogHeader>
+            <ActionDialogBrand />
             <DialogTitle>
               {reviewAction === 'verify' ? 'Verify Property' : 'Reject Property'}
             </DialogTitle>
@@ -684,6 +687,7 @@ export default function ManagerDashboardPage() {
       <Dialog open={documentsModalOpen} onOpenChange={setDocumentsModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
+            <ActionDialogBrand />
             <DialogTitle>Property Documents</DialogTitle>
             <DialogDescription>
               {selectedProperty?.title}

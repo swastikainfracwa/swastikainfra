@@ -50,6 +50,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AddPropertyModal } from '@/components/AddPropertyModal';
+import { ActionDialogBrand } from '@/components/ActionDialogBrand';
 
 interface User {
   id: string;
@@ -1182,6 +1183,7 @@ export default function AdminDashboardPage() {
       <Dialog open={userModalOpen} onOpenChange={setUserModalOpen}>
         <DialogContent>
           <DialogHeader>
+            <ActionDialogBrand />
             <DialogTitle>{editingUser ? 'Edit User' : 'Create New User'}</DialogTitle>
             <DialogDescription>
               {editingUser ? 'Update user information' : 'Add a new user to the platform'}
@@ -1281,6 +1283,7 @@ export default function AdminDashboardPage() {
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent>
           <DialogHeader>
+            <ActionDialogBrand />
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete <strong>{userToDelete?.name}</strong>? This action cannot be undone.
@@ -1301,6 +1304,7 @@ export default function AdminDashboardPage() {
       <Dialog open={assignAgentModalOpen} onOpenChange={setAssignAgentModalOpen}>
         <DialogContent>
           <DialogHeader>
+            <ActionDialogBrand />
             <DialogTitle>Assign Agent</DialogTitle>
             <DialogDescription>
               Assign an agent to manage <strong>{propertyToAssign?.title}</strong>
@@ -1339,6 +1343,7 @@ export default function AdminDashboardPage() {
       <Dialog open={propertyDeleteConfirmOpen} onOpenChange={setPropertyDeleteConfirmOpen}>
         <DialogContent>
           <DialogHeader>
+            <ActionDialogBrand />
             <DialogTitle>Delete Property</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete <strong>{propertyToDelete?.title}</strong>? This action cannot be undone and will remove all associated data.
