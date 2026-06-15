@@ -139,10 +139,14 @@ export async function PATCH(
     // Only managers/admins can update verification status and assign agents
     if (isManager) {
       if (body.verificationStatus !== undefined) {
-        updates.verification_status = body.verificationStatus;
-        if (body.verificationStatus === 'verified') {
-          updates.verified_at = new Date().toISOString();
-          updates.verification_badge = body.verificationBadge || 'verified-manager';
+        if (body.verificationStatus === 'assigned') {
+          // Agent assignment is tracked separately through assigned_agent_id.
+        } else {
+          updates.verification_status = body.verificationStatus;
+          if (body.verificationStatus === 'verified') {
+            updates.verified_at = new Date().toISOString();
+            updates.verification_badge = body.verificationBadge || 'verified-manager';
+          }
         }
       }
       if (body.assignedAgentId !== undefined) {

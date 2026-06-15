@@ -204,7 +204,6 @@ export default function ManagerDashboardPage() {
         },
         body: JSON.stringify({
           assignedAgentId,
-          verificationStatus: 'assigned',
         }),
       });
 
