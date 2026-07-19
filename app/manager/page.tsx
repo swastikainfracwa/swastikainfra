@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Building2,
@@ -559,7 +560,13 @@ export default function ManagerDashboardPage() {
                           </div>
                         </TableCell>
                         <TableCell className="max-w-[300px] truncate">
-                          {lead.propertyTitle}
+                          {lead.propertyId ? (
+                            <Link href={`/plots/${lead.propertyId}`} className="hover:text-primary underline-offset-4 hover:underline">
+                              {lead.propertyTitle}
+                            </Link>
+                          ) : (
+                            lead.propertyTitle
+                          )}
                         </TableCell>
                         <TableCell>
                           {typeof lead.createdAt === 'string' 
